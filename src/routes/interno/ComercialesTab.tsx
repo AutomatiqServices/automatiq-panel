@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
+import { ChevronDownIcon } from 'lucide-react'
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
 import { fm, fmtDate } from '@/lib/format'
@@ -20,8 +20,11 @@ const ESTADO_LABEL: Record<string, string> = {
 
 export function ComercialesTab() {
   const [rows, setRows] = useState<ResumenComercial[] | null>(null)
-  const [openComercial, setOpenComercial] = useState<ResumenComercial | null>(null)
-  const [clientes, setClientes] = useState<ClienteComercial[] | null>(null)
+  const [openId, setOpenId] = useState<string | null>(null)
+  // Cachea por comercial: al reabrir uno ya visitado no se vuelve a consultar.
+  const [clientesPorComercial, setClientesPorComercial] = useState<
+    Record<string, ClienteComercial[]>
+  >({})
 
   useEffect(() => {
     let cancelled = false
@@ -34,13 +37,20 @@ export function ComercialesTab() {
     }
   }, [])
 
-  async function verClientes(c: ResumenComercial) {
-    setOpenComercial(c)
-    setClientes(null)
+  async function toggleComercial(c: ResumenComercial) {
+    if (openId === c.comercial_id) {
+      setOpenId(null)
+      return
+    }
+    setOpenId(c.comercial_id)
+    if (clientesPorComercial[c.comercial_id]) return
     const { data, error } = await supabase.rpc('ceo_clientes_comercial', {
       p_comercial_id: c.comercial_id,
     })
-    setClientes(error ? [] : ((data as ClienteComercial[]) ?? []))
+    setClientesPorComercial((prev) => ({
+      ...prev,
+      [c.comercial_id]: error ? [] : ((data as ClienteComercial[]) ?? []),
+    }))
   }
 
   const totales = rows?.reduce(
@@ -97,11 +107,17 @@ export function ComercialesTab() {
           <EmptyList>No hay comerciales dados de alta.</EmptyList>
         ) : (
           <div className="flex flex-col gap-2">
-            {rows.map((r) => (
+            {rows.map((r) => {
+              const abierto = openId === r.comercial_id
+              const clientes = clientesPorComercial[r.comercial_id]
+              return (
+                <div key={r.comercial_id}>
               <button
-                key={r.comercial_id}
-                onClick={() => verClientes(r)}
-                className="grid grid-cols-[36px_1fr_auto_auto_auto] items-center gap-3 rounded-lg border p-3 text-left hover:bg-accent"
+                onClick={() => toggleComercial(r)}
+                aria-expanded={abierto}
+                className={`grid w-full grid-cols-[36px_1fr_auto_auto_auto_16px] items-center gap-3 border p-3 text-left transition-colors hover:bg-accent ${
+                  abierto ? 'rounded-t-lg border-b-0 bg-accent' : 'rounded-lg'
+                }`}
               >
                 <div className="flex size-9 items-center justify-center rounded-lg bg-muted text-sm font-bold">
                   {(r.name || '?').charAt(0).toUpperCase()}
@@ -147,62 +163,71 @@ export function ComercialesTab() {
                     {fm(Number(r.comision_pendiente))}
                   </div>
                 </div>
+                <ChevronDownIcon
+                  className={`size-4 text-muted-foreground transition-transform ${
+                    abierto ? 'rotate-180' : ''
+                  }`}
+                />
               </button>
-            ))}
+
+              {/* Acordeón: grid-rows 0fr -> 1fr anima hasta la altura real
+                  del contenido, que height:auto no permite animar. */}
+              <div
+                className={`grid overflow-hidden rounded-b-lg border border-t-0 transition-all duration-300 ease-out ${
+                  abierto ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] border-transparent opacity-0'
+                }`}
+              >
+                <div className="min-h-0">
+                  <div className="p-3">
+                    {!clientes ? (
+                      <p className="py-4 text-center text-sm text-muted-foreground">Cargando…</p>
+                    ) : clientes.length === 0 ? (
+                      <p className="py-4 text-center text-sm text-muted-foreground">
+                        Este comercial todavía no tiene clientes.
+                      </p>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        {clientes.map((c) => (
+                          <div
+                            key={c.cliente_id}
+                            className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 rounded-lg border bg-background/40 p-3"
+                          >
+                            <div className="min-w-0">
+                              <div className="truncate text-sm font-semibold">{c.nombre_empresa}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {ESTADO_LABEL[c.estado] ?? c.estado} · {fmtDate(c.created_at)}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-xs text-muted-foreground">Diagnóstico</div>
+                              <div className="text-sm font-bold">
+                                {c.diagnostico_precio ? fm(Number(c.diagnostico_precio)) : '—'}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-xs text-muted-foreground">Cobrado</div>
+                              <div className="text-sm font-bold text-emerald-500">
+                                {fm(Number(c.cobrado))}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-xs text-muted-foreground">Comisión</div>
+                              <div className="text-sm font-bold">{fm(Number(c.comision_total))}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+                </div>
+              )
+            })}
           </div>
         )}
       </Card>
 
-      {openComercial && (
-        <Card className="p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="text-sm font-bold">Clientes de {openComercial.name}</div>
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-full text-xs"
-              onClick={() => setOpenComercial(null)}
-            >
-              Cerrar
-            </Button>
-          </div>
-          {!clientes ? (
-            <EmptyList>Cargando…</EmptyList>
-          ) : clientes.length === 0 ? (
-            <EmptyList>Este comercial todavía no tiene clientes.</EmptyList>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {clientes.map((c) => (
-                <div
-                  key={c.cliente_id}
-                  className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 rounded-lg border p-3"
-                >
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold">{c.nombre_empresa}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {ESTADO_LABEL[c.estado] ?? c.estado} · {fmtDate(c.created_at)}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs text-muted-foreground">Diagnóstico</div>
-                    <div className="text-sm font-bold">
-                      {c.diagnostico_precio ? fm(Number(c.diagnostico_precio)) : '—'}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs text-muted-foreground">Cobrado</div>
-                    <div className="text-sm font-bold text-emerald-500">{fm(Number(c.cobrado))}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs text-muted-foreground">Comisión</div>
-                    <div className="text-sm font-bold">{fm(Number(c.comision_total))}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-      )}
     </div>
   )
 }
