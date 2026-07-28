@@ -18,8 +18,12 @@ export function VentasTab({ sales }: { sales: Sale[] }) {
           const isCur = i === CUR_M
           const barColor = pct >= 100 ? 'bg-emerald-500' : pct >= 60 ? 'bg-amber-400' : 'bg-muted-foreground/40'
           return (
-            <Card key={m} className={`rounded-xl p-3.5 ${isCur ? 'border-foreground/50' : ''}`}>
-              <div className="mb-2 text-xs tracking-wide text-muted-foreground uppercase">
+            <Card key={m} className={`rounded-xl p-3.5 ${isCur ? 'ring-foreground' : ''}`}>
+              <div
+                className={`mb-2 text-xs tracking-wide uppercase ${
+                  isCur ? 'text-foreground' : 'text-muted-foreground'
+                }`}
+              >
                 {m}
                 {isCur ? ' ✦' : ''}
               </div>

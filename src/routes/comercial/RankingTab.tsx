@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
@@ -13,17 +13,19 @@ export function RankingTab({ sellerId }: { sellerId: string }) {
   const [data, setData] = useState<Record<Scope, RankingRow[] | null>>({ month: null, year: null })
   const [failedScopes, setFailedScopes] = useState<Record<Scope, boolean>>({ month: false, year: false })
   const [retryTick, setRetryTick] = useState(0)
-  const fetchedScopes = useRef(new Set<Scope>())
   const curYear = new Date().getFullYear()
 
+  // Refetch whenever the scope changes (or a retry is requested). Deliberately
+  // does NOT depend on `data`: an object dependency would refire the effect on
+  // its own writes. Re-fetching an already-loaded scope on remount is cheap and
+  // keeps this correct under StrictMode's double-invoke, which a ref-based
+  // "already fetched" guard does not (the ref survives the remount, so the
+  // second pass would skip the fetch while the first pass was cancelled).
   useEffect(() => {
-    if (fetchedScopes.current.has(scope)) return
-    fetchedScopes.current.add(scope)
     let cancelled = false
     supabase.rpc('get_seller_ranking', { scope }).then(({ data: rows, error }) => {
       if (cancelled) return
       if (error) {
-        fetchedScopes.current.delete(scope)
         setFailedScopes((prev) => ({ ...prev, [scope]: true }))
         return
       }

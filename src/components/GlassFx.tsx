@@ -63,8 +63,13 @@ export function GlassFx() {
       />
       <div
         ref={spotlightRef}
-        className="pointer-events-none fixed top-0 left-0 z-0 hidden h-[700px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full [will-change:transform] sm:block"
-        style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 65%)' }}
+        className="pointer-events-none fixed top-0 left-0 z-0 hidden h-[700px] w-[700px] rounded-full [will-change:transform] sm:block"
+        style={{
+          // Centering via negative margins (not translate) so the JS-driven
+          // transform below is free to position the blob at the cursor.
+          margin: '-350px 0 0 -350px',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 65%)',
+        }}
       />
     </>
   )

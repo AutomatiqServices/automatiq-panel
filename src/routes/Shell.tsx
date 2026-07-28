@@ -19,7 +19,7 @@ export function Shell() {
   const canSwitch = isCeo && !!seller
 
   return (
-    <div className="relative z-10 min-h-screen bg-background">
+    <div className="relative z-10 min-h-screen">
       <nav className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b bg-background/80 px-6 backdrop-blur">
         <div className="flex min-w-0 items-center gap-4">
           <img src="/logo.png" alt="AutomatiQ" className="h-6 w-auto" />
