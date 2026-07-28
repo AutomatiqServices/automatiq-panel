@@ -66,7 +66,7 @@ export function Login({ initialMode = 'login' }: { initialMode?: Mode }) {
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-background p-5">
+    <div className="fixed inset-0 z-10 flex items-center justify-center p-5">
       <div className="w-full max-w-sm rounded-2xl border bg-card p-8 shadow-lg">
         <img src="/logo.png" alt="AutomatiQ" className="mb-2 h-12 w-auto" />
         <div className="mb-8 text-xs font-semibold tracking-widest text-muted-foreground uppercase">

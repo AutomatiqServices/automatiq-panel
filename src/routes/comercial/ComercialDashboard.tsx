@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
 import { useAuth } from '@/stores/auth'
 import type { Seller } from '@/lib/types'
 import { loadSales, type Sale } from '@/routes/comercial/data'
@@ -12,10 +11,17 @@ import { RankingTab } from '@/routes/comercial/RankingTab'
 import { LogrosTab } from '@/routes/comercial/LogrosTab'
 import { SettingsDialog } from '@/routes/comercial/SettingsDialog'
 
-export function ComercialDashboard({ seller }: { seller: Seller }) {
+export function ComercialDashboard({
+  seller,
+  settingsOpen,
+  onSettingsOpenChange,
+}: {
+  seller: Seller
+  settingsOpen: boolean
+  onSettingsOpenChange: (open: boolean) => void
+}) {
   const email = useAuth((s) => s.email)
   const [sales, setSales] = useState<Sale[]>([])
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const [whatsapp, setWhatsapp] = useState(seller.whatsapp)
 
   useEffect(() => {
@@ -26,13 +32,8 @@ export function ComercialDashboard({ seller }: { seller: Seller }) {
 
   return (
     <div>
-      <div className="mb-4 flex justify-end">
-        <Button size="sm" variant="outline" className="rounded-full text-xs" onClick={() => setSettingsOpen(true)}>
-          ⚙ Cuenta
-        </Button>
-      </div>
       <Tabs defaultValue="dashboard">
-        <TabsList className="mb-6 flex-wrap">
+        <TabsList className="mb-7 h-11 flex-wrap">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="ventas">Mis ventas</TabsTrigger>
           <TabsTrigger value="comisiones">Comisiones</TabsTrigger>
@@ -61,7 +62,7 @@ export function ComercialDashboard({ seller }: { seller: Seller }) {
       </Tabs>
       <SettingsDialog
         open={settingsOpen}
-        onOpenChange={setSettingsOpen}
+        onOpenChange={onSettingsOpenChange}
         seller={{ ...seller, whatsapp }}
         email={email ?? ''}
         onWhatsappSaved={setWhatsapp}

@@ -13,12 +13,13 @@ export function Shell() {
   const email = useAuth((s) => s.email)
   const signOut = useAuth((s) => s.signOut)
   const [view, setView] = useState<View>(seller ? 'comercial' : 'interno')
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const name = seller?.name ?? perfil?.nombre ?? email ?? '—'
   const canSwitch = isCeo && !!seller
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative z-10 min-h-screen bg-background">
       <nav className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b bg-background/80 px-6 backdrop-blur">
         <div className="flex min-w-0 items-center gap-4">
           <img src="/logo.png" alt="AutomatiQ" className="h-6 w-auto" />
@@ -47,6 +48,16 @@ export function Shell() {
               </Button>
             </div>
           )}
+          {view === 'comercial' && seller && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 rounded-full text-xs"
+              onClick={() => setSettingsOpen(true)}
+            >
+              ⚙ Cuenta
+            </Button>
+          )}
           <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={signOut}>
             Salir
           </Button>
@@ -54,7 +65,11 @@ export function Shell() {
       </nav>
       <main className="mx-auto max-w-[1100px] px-6 pt-19 pb-15">
         {view === 'comercial' && seller ? (
-          <ComercialDashboard seller={seller} />
+          <ComercialDashboard
+            seller={seller}
+            settingsOpen={settingsOpen}
+            onSettingsOpenChange={setSettingsOpen}
+          />
         ) : (
           <InternoDashboard />
         )}

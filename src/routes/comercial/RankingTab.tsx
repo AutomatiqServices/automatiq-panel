@@ -11,6 +11,8 @@ type Scope = 'month' | 'year'
 export function RankingTab({ sellerId }: { sellerId: string }) {
   const [scope, setScope] = useState<Scope>('month')
   const [data, setData] = useState<Record<Scope, RankingRow[] | null>>({ month: null, year: null })
+  const [failedScopes, setFailedScopes] = useState<Record<Scope, boolean>>({ month: false, year: false })
+  const [retryTick, setRetryTick] = useState(0)
   const fetchedScopes = useRef(new Set<Scope>())
   const curYear = new Date().getFullYear()
 
@@ -19,17 +21,21 @@ export function RankingTab({ sellerId }: { sellerId: string }) {
     fetchedScopes.current.add(scope)
     let cancelled = false
     supabase.rpc('get_seller_ranking', { scope }).then(({ data: rows, error }) => {
+      if (cancelled) return
       if (error) {
         fetchedScopes.current.delete(scope)
+        setFailedScopes((prev) => ({ ...prev, [scope]: true }))
         return
       }
-      if (cancelled) return
+      setFailedScopes((prev) => ({ ...prev, [scope]: false }))
       setData((prev) => ({ ...prev, [scope]: (rows as RankingRow[]) ?? [] }))
     })
     return () => {
       cancelled = true
     }
-  }, [scope])
+  }, [scope, retryTick])
+
+  const failed = failedScopes[scope]
 
   const ranked = data[scope]
   const withSales = ranked?.filter((r) => r.sales_count > 0) ?? []
@@ -69,7 +75,19 @@ export function RankingTab({ sellerId }: { sellerId: string }) {
           <div className="text-[8px] tracking-wide uppercase">Puesto</div>
         </div>
         <div className="min-w-[200px] flex-1">
-          {!ranked ? (
+          {failed ? (
+            <>
+              <div className="text-sm font-bold">No se pudo cargar el ranking.</div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2 rounded-full text-xs"
+                onClick={() => setRetryTick((t) => t + 1)}
+              >
+                Reintentar
+              </Button>
+            </>
+          ) : !ranked ? (
             <div className="text-sm font-bold">Cargando ranking…</div>
           ) : !me || me.sales_count === 0 ? (
             <>
@@ -106,7 +124,9 @@ export function RankingTab({ sellerId }: { sellerId: string }) {
             {ranked ? `${withSales.length} con ventas ${scopeLbl}` : '—'}
           </div>
         </div>
-        {!ranked ? (
+        {failed ? (
+          <EmptyList>No se pudo cargar el ranking.</EmptyList>
+        ) : !ranked ? (
           <EmptyList>Cargando ranking…</EmptyList>
         ) : withSales.length === 0 ? (
           <EmptyList>Sin ventas del equipo {scopeLbl} todavía. ¡Sé el primero! 🚀</EmptyList>

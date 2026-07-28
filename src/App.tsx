@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Toaster } from '@/components/ui/sonner'
+import { GlassFx } from '@/components/GlassFx'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/stores/auth'
 import { Login } from '@/routes/Login'
@@ -28,6 +29,7 @@ export default function App() {
 
   return (
     <>
+      <GlassFx />
       <Toaster />
       {needsPasswordReset ? (
         <Login initialMode="reset" />
