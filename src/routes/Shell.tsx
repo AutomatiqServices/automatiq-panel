@@ -52,7 +52,7 @@ export function Shell() {
           </Button>
         </div>
       </nav>
-      <main className="mx-auto max-w-5xl px-6 pt-20 pb-16">
+      <main className="mx-auto max-w-[1100px] px-6 pt-[76px] pb-[60px]">
         {view === 'comercial' && seller ? (
           <ComercialDashboard seller={seller} />
         ) : (
