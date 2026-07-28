@@ -67,9 +67,9 @@ export function RankingTab({ sellerId }: { sellerId: string }) {
         </Button>
       </div>
 
-      <Card className={`mb-5 flex flex-wrap items-center gap-5 p-6 ${myRank <= 3 && me ? 'bg-primary/5' : ''}`}>
+      <Card className={`mb-5 flex-row flex-wrap items-center gap-5 p-6 ${myRank <= 3 && me ? 'bg-primary/5' : ''}`}>
         <div
-          className={`flex h-16 w-16 flex-col items-center justify-center rounded-xl border ${
+          className={`flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-xl border ${
             myRank <= 3 && me ? 'bg-primary text-primary-foreground' : ''
           }`}
         >
