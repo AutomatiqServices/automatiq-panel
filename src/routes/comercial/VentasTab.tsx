@@ -10,7 +10,7 @@ const CUR_Y = CUR.getFullYear()
 export function VentasTab({ sales }: { sales: Sale[] }) {
   return (
     <div>
-      <div className="mb-5 grid grid-cols-2 gap-[10px] sm:grid-cols-4">
+      <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {MONTHS.map((m, i) => {
           const monthSales = getMonthSales(sales, i, CUR_Y)
           const pct = Math.min(100, (monthSales.length / GOAL) * 100)
@@ -18,18 +18,15 @@ export function VentasTab({ sales }: { sales: Sale[] }) {
           const isCur = i === CUR_M
           const barColor = pct >= 100 ? 'bg-emerald-500' : pct >= 60 ? 'bg-amber-400' : 'bg-muted-foreground/40'
           return (
-            <Card
-              key={m}
-              className={`rounded-xl p-3.5 ${isCur ? 'border-foreground/50' : ''}`}
-            >
-              <div className="mb-2 text-[10px] tracking-[1px] text-muted-foreground uppercase">
+            <Card key={m} className={`rounded-xl p-3.5 ${isCur ? 'border-foreground/50' : ''}`}>
+              <div className="mb-2 text-xs tracking-wide text-muted-foreground uppercase">
                 {m}
                 {isCur ? ' ✦' : ''}
               </div>
               <div className="mb-1.5 h-1.5 overflow-hidden rounded bg-muted">
                 <div className={`h-full rounded ${barColor}`} style={{ width: `${pct}%` }} />
               </div>
-              <div className="flex items-center justify-between text-[10px]">
+              <div className="flex items-center justify-between text-xs">
                 <span>
                   {monthSales.length}/{GOAL}
                 </span>
@@ -40,7 +37,7 @@ export function VentasTab({ sales }: { sales: Sale[] }) {
         })}
       </div>
       <Card className="p-5">
-        <div className="mb-4 text-[13px] font-bold">Historial completo</div>
+        <div className="mb-4 text-sm font-bold">Historial completo</div>
         <div className="flex max-h-[500px] flex-col gap-2 overflow-y-auto">
           {sales.length === 0 ? (
             <EmptyList>Sin clientes aún. ¡A por el primer cierre!</EmptyList>
