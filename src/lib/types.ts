@@ -62,3 +62,54 @@ export interface DiagnosticoPendiente {
   cliente_estado: string
   created_at: string
 }
+
+export interface ResumenComercial {
+  comercial_id: string
+  name: string
+  email: string | null
+  invisible: boolean
+  clientes_total: number
+  clientes_mes: number
+  comision_total: number
+  comision_cobrada: number
+  comision_pendiente: number
+  ultimo_cierre: string | null
+}
+
+export interface FacturacionResumen {
+  cobrado_total: number
+  pendiente_total: number
+  cobrado_mes: number
+  cobrado_diagnostico: number
+  cobrado_setup_50: number
+  cobrado_setup_resto: number
+  cobrado_mantenimiento: number
+  comisiones_devengadas: number
+  neto: number
+}
+
+export interface FacturacionMes {
+  mes: string
+  cobrado: number
+  pendiente: number
+}
+
+export interface PagoPendiente {
+  pago_id: string
+  cliente_id: string
+  nombre_empresa: string
+  comercial_name: string | null
+  tipo: string
+  monto: number
+  created_at: string
+}
+
+export interface ClienteComercial {
+  cliente_id: string
+  nombre_empresa: string
+  estado: string
+  created_at: string
+  diagnostico_precio: number | null
+  comision_total: number
+  cobrado: number
+}
