@@ -12,7 +12,8 @@ export function Shell() {
   const isCeo = useAuth((s) => s.isCeo)
   const email = useAuth((s) => s.email)
   const signOut = useAuth((s) => s.signOut)
-  const [view, setView] = useState<View>(seller ? 'comercial' : 'interno')
+  // El CEO entra al panel interno; quien solo es comercial, al suyo.
+  const [view, setView] = useState<View>(isCeo ? 'interno' : 'comercial')
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const name = seller?.name ?? perfil?.nombre ?? email ?? '—'
