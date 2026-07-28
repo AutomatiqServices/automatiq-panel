@@ -25,3 +25,6 @@ dist-ssr
 *.sln
 *.sw?
 .playwright-cli/
+
+# Local Netlify folder
+.netlify
