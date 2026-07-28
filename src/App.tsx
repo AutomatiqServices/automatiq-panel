@@ -34,8 +34,9 @@ export default function App() {
       {needsPasswordReset ? (
         <Login initialMode="reset" />
       ) : status === 'loading' ? (
-        <div className="fixed inset-0 flex items-center justify-center bg-background text-sm text-muted-foreground">
-          Conectando con Supabase…
+        <div className="fixed inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-background">
+          <img src="/logo.png" alt="AutomatiQ" className="h-12 w-auto" />
+          <div className="size-8 animate-spin rounded-full border-2 border-border border-t-white" />
         </div>
       ) : status === 'signed-in' ? (
         <Shell />
