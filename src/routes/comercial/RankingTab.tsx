@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
@@ -11,15 +11,25 @@ type Scope = 'month' | 'year'
 export function RankingTab({ sellerId }: { sellerId: string }) {
   const [scope, setScope] = useState<Scope>('month')
   const [data, setData] = useState<Record<Scope, RankingRow[] | null>>({ month: null, year: null })
+  const fetchedScopes = useRef(new Set<Scope>())
   const curYear = new Date().getFullYear()
 
   useEffect(() => {
-    if (data[scope]) return
+    if (fetchedScopes.current.has(scope)) return
+    fetchedScopes.current.add(scope)
+    let cancelled = false
     supabase.rpc('get_seller_ranking', { scope }).then(({ data: rows, error }) => {
-      if (error) return
+      if (error) {
+        fetchedScopes.current.delete(scope)
+        return
+      }
+      if (cancelled) return
       setData((prev) => ({ ...prev, [scope]: (rows as RankingRow[]) ?? [] }))
     })
-  }, [scope, data])
+    return () => {
+      cancelled = true
+    }
+  }, [scope])
 
   const ranked = data[scope]
   const withSales = ranked?.filter((r) => r.sales_count > 0) ?? []
