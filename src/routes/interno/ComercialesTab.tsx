@@ -109,6 +109,11 @@ export function ComercialesTab() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="truncate text-sm font-semibold">{r.name}</span>
+                    {r.es_prueba && (
+                      <Badge variant="outline" className="border-amber-500/40 text-xs text-amber-500">
+                        prueba
+                      </Badge>
+                    )}
                     {r.invisible && (
                       <Badge variant="secondary" className="text-xs">
                         oculto

@@ -48,8 +48,26 @@ export function FacturacionTab() {
   const desgloseTotal = desglose.reduce((s, d) => s + d.monto, 0)
   const maxMes = meses?.reduce((mx, m) => Math.max(mx, Number(m.cobrado) || 0), 0) ?? 0
 
+  const comercialesPrueba = Number(resumen?.comerciales_prueba ?? 0)
+  const comisionesPrueba = Number(resumen?.comisiones_prueba ?? 0)
+
   return (
     <div>
+      {comercialesPrueba > 0 && (
+        <div className="mb-5 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+          <div className="text-sm font-bold text-amber-500">
+            Hay datos de prueba en el tablero
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {comercialesPrueba} comercial{comercialesPrueba === 1 ? '' : 'es'} sembrado
+            {comercialesPrueba === 1 ? '' : 's'} para que el equipo vea competencia en el ranking.
+            Sus {fm(comisionesPrueba)} de comisiones quedan fuera del neto de aquí abajo, pero sí
+            aparecen en la pestaña Comerciales (marcados como «prueba») y en el ranking que ven los
+            comerciales.
+          </p>
+        </div>
+      )}
+
       {/* Cifras principales: KPI row, no un gráfico. */}
       <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Card className="p-4">

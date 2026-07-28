@@ -68,6 +68,7 @@ export interface ResumenComercial {
   name: string
   email: string | null
   invisible: boolean
+  es_prueba: boolean
   clientes_total: number
   clientes_mes: number
   comision_total: number
@@ -86,6 +87,8 @@ export interface FacturacionResumen {
   cobrado_mantenimiento: number
   comisiones_devengadas: number
   neto: number
+  comisiones_prueba: number
+  comerciales_prueba: number
 }
 
 export interface FacturacionMes {
