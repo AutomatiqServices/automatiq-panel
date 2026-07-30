@@ -66,11 +66,22 @@ export interface Desglose {
   niveles: DesgloseNivel[]
 }
 
-/** Lo que WF-E1 guarda en diagnosticos.contenido_json. */
+/** Precio fijado a mano por el equipo, que sustituye al que calculó la IA. */
+export interface PrecioManual {
+  nivel: string
+  setup: number | null
+  mantenimiento: number | null
+}
+
+/** Lo que WF-E1 guarda en diagnosticos.contenido_json (WF-E3 le suma el reprecio). */
 export interface ContenidoDiagnostico {
   literal?: Record<string, string | null>
   html?: string
+  /** HTML tal como lo redactó la IA, antes de tocar los precios a mano. */
+  html_ia?: string
   desglose?: Desglose
+  precios_manuales?: PrecioManual[]
+  reprecio_en?: string
 }
 
 export interface DiagnosticoPendiente {

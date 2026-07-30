@@ -1,12 +1,59 @@
+import { useState } from 'react'
 import { fm } from '@/lib/format'
-import type { Desglose } from '@/lib/types'
+import type { Desglose, PrecioManual } from '@/lib/types'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+
+type Props = {
+  desglose: Desglose
+  /** Precios fijados a mano en una pasada anterior, si los hubo. */
+  preciosManuales?: PrecioManual[]
+  guardando?: boolean
+  onAplicar: (precios: PrecioManual[]) => void
+}
+
+/** '' cuando no hay valor: el input queda vacío en vez de mostrar 0. */
+function num(v: string): number | null {
+  const n = Number(v.replace(/[^\d.-]/g, ''))
+  return v.trim() === '' || !isFinite(n) ? null : n
+}
 
 /**
- * Cómo la IA llegó al precio de cada nivel de Setup.
+ * Cómo la IA llegó al precio de cada nivel de Setup, y los inputs para
+ * sobrescribirlo a mano.
  * Uso interno del equipo: nada de esto se le muestra al cliente ni sale en el PDF.
  */
-export function DesgloseCostos({ desglose }: { desglose: Desglose }) {
+export function DesgloseCostos({ desglose, preciosManuales, guardando, onAplicar }: Props) {
   const niveles = desglose.niveles ?? []
+  const [editado, setEditado] = useState<Record<string, { setup: string; mant: string }>>({})
+
+  function valorDe(nivel: string, campo: 'setup' | 'mant', calculado: number): string {
+    const tocado = editado[nivel]?.[campo]
+    if (tocado !== undefined) return tocado
+    const manual = preciosManuales?.find((p) => p.nivel === nivel)
+    const previo = campo === 'setup' ? manual?.setup : manual?.mantenimiento
+    return String(previo ?? calculado)
+  }
+
+  function editar(nivel: string, campo: 'setup' | 'mant', valor: string) {
+    setEditado((prev) => ({
+      ...prev,
+      [nivel]: {
+        setup: campo === 'setup' ? valor : (prev[nivel]?.setup ?? ''),
+        mant: campo === 'mant' ? valor : (prev[nivel]?.mant ?? ''),
+      },
+    }))
+  }
+
+  function aplicar() {
+    onAplicar(
+      niveles.map((n) => ({
+        nivel: n.nivel,
+        setup: num(valorDe(n.nivel, 'setup', n.precio_setup)),
+        mantenimiento: num(valorDe(n.nivel, 'mant', n.precio_mantenimiento)),
+      })),
+    )
+  }
   if (niveles.length === 0) {
     return (
       <p className="mt-3 rounded-md border border-dashed p-3 text-xs text-muted-foreground">
@@ -26,19 +73,53 @@ export function DesgloseCostos({ desglose }: { desglose: Desglose }) {
         {niveles.map((n) => {
           const costoImplementacion = n.horas_implementacion * n.tarifa_hora
           const costoSoporteMes = n.horas_soporte_mes * n.tarifa_hora
-          const margenSetup = n.precio_setup - costoImplementacion
-          const margenMes = n.precio_mantenimiento - costoSoporteMes - n.costos_recurrentes_mes
+          // El margen se mide contra el precio que se va a publicar, no contra
+          // el que calculó la IA: es lo que hay que mirar al fijarlo a mano.
+          const setupElegido = num(valorDe(n.nivel, 'setup', n.precio_setup)) ?? n.precio_setup
+          const mantElegido =
+            num(valorDe(n.nivel, 'mant', n.precio_mantenimiento)) ?? n.precio_mantenimiento
+          const margenSetup = setupElegido - costoImplementacion
+          const margenMes = mantElegido - costoSoporteMes - n.costos_recurrentes_mes
+          const cambiado =
+            setupElegido !== n.precio_setup || mantElegido !== n.precio_mantenimiento
 
           return (
             <div key={n.nivel} className="rounded-md border bg-background p-3">
               <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                 <span className="text-xs font-bold">{n.nivel}</span>
-                <span className="text-xs">
-                  <span className="font-semibold">{fm(n.precio_setup)}</span>
-                  <span className="text-muted-foreground"> setup · </span>
-                  <span className="font-semibold">{fm(n.precio_mantenimiento)}</span>
-                  <span className="text-muted-foreground">/mes</span>
+                <span className="text-xs text-muted-foreground">
+                  IA: {fm(n.precio_setup)} setup · {fm(n.precio_mantenimiento)}/mes
                 </span>
+              </div>
+
+              <div className="mb-2 flex flex-wrap items-end gap-3">
+                <label className="flex flex-col gap-1">
+                  <span className="text-[11px] text-muted-foreground">Setup €</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={10}
+                    inputMode="numeric"
+                    className="h-8 w-28 text-xs"
+                    value={valorDe(n.nivel, 'setup', n.precio_setup)}
+                    onChange={(e) => editar(n.nivel, 'setup', e.target.value)}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-[11px] text-muted-foreground">Mantenimiento €/mes</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={5}
+                    inputMode="numeric"
+                    className="h-8 w-28 text-xs"
+                    value={valorDe(n.nivel, 'mant', n.precio_mantenimiento)}
+                    onChange={(e) => editar(n.nivel, 'mant', e.target.value)}
+                  />
+                </label>
+                {cambiado && (
+                  <span className="pb-1.5 text-[11px] text-primary">modificado</span>
+                )}
               </div>
 
               <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] sm:grid-cols-4">
@@ -57,6 +138,15 @@ export function DesgloseCostos({ desglose }: { desglose: Desglose }) {
             </div>
           )
         })}
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 border-t pt-3">
+        <Button size="sm" disabled={guardando} onClick={aplicar}>
+          {guardando ? 'Regenerando…' : 'Aplicar precios y regenerar PDF'}
+        </Button>
+        <span className="text-[11px] text-muted-foreground">
+          Reescribe solo los importes del PDF. El resto del informe no cambia.
+        </span>
       </div>
     </div>
   )

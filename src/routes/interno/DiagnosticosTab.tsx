@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { N8N_BASE, INTERNAL_PANEL_KEY } from '@/lib/env'
 import { fm, fmtDate } from '@/lib/format'
 import { useAuth } from '@/stores/auth'
-import type { DiagnosticoPendiente } from '@/lib/types'
+import type { DiagnosticoPendiente, PrecioManual } from '@/lib/types'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -12,6 +12,7 @@ import { DesgloseCostos } from './DesgloseCostos'
 
 const WF_E1_URL = `${N8N_BASE}/webhook/automatiq-diagnostico-borrador`
 const WF_E2_URL = `${N8N_BASE}/webhook/automatiq-diagnostico-aprobar`
+const WF_E3_URL = `${N8N_BASE}/webhook/automatiq-diagnostico-reprecio`
 
 type EstadoBadge = { label: string; variant: 'secondary' | 'default' | 'outline' }
 
@@ -97,6 +98,36 @@ export function DiagnosticosTab() {
       setOpenPdf((prev) => ({ ...prev, [id]: body.url }))
     } catch (e) {
       toast.error('No se pudo cargar el PDF: ' + (e as Error).message)
+    }
+  }
+
+  async function aplicarPrecios(id: string, precios: PrecioManual[]) {
+    setBusyId(id)
+    try {
+      const res = await fetch(WF_E3_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Internal-Key': INTERNAL_PANEL_KEY },
+        body: JSON.stringify({ diagnostico_id: id, precios }),
+      })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok || body.ok === false) throw new Error(body.error || 'Error aplicando los precios')
+      const faltantes: string[] = body.no_encontrados ?? []
+      if (faltantes.length > 0) {
+        toast.warning(`PDF regenerado, pero no se encontró: ${faltantes.join(', ')}`)
+      } else {
+        toast.success('Precios aplicados · PDF regenerado')
+      }
+      // El PDF abierto quedó apuntando a la versión vieja.
+      setOpenPdf((prev) => {
+        const next = { ...prev }
+        delete next[id]
+        return next
+      })
+      await load()
+    } catch (e) {
+      toast.error('No se pudieron aplicar los precios: ' + (e as Error).message)
+    } finally {
+      setBusyId(null)
     }
   }
 
@@ -193,7 +224,12 @@ export function DiagnosticosTab() {
                     </Button>
                   </div>
                   {openDesglose[d.diagnostico_id] && desglose && (
-                    <DesgloseCostos desglose={desglose} />
+                    <DesgloseCostos
+                      desglose={desglose}
+                      preciosManuales={d.contenido_json?.precios_manuales}
+                      guardando={busyId === d.diagnostico_id}
+                      onAplicar={(precios) => aplicarPrecios(d.diagnostico_id, precios)}
+                    />
                   )}
                   {openPdf[d.diagnostico_id] && (
                     <iframe
