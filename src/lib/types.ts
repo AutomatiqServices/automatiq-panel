@@ -49,6 +49,30 @@ export interface LinkPago {
   opcion: string | null
 }
 
+/** Cálculo de costos por nivel de Setup. Uso interno: no aparece en el PDF del cliente. */
+export interface DesgloseNivel {
+  nivel: string
+  horas_implementacion: number
+  tarifa_hora: number
+  costos_recurrentes_mes: number
+  horas_soporte_mes: number
+  margen_aplicado: string
+  precio_setup: number
+  precio_mantenimiento: number
+  justificacion_horas: string
+}
+
+export interface Desglose {
+  niveles: DesgloseNivel[]
+}
+
+/** Lo que WF-E1 guarda en diagnosticos.contenido_json. */
+export interface ContenidoDiagnostico {
+  literal?: Record<string, string | null>
+  html?: string
+  desglose?: Desglose
+}
+
 export interface DiagnosticoPendiente {
   diagnostico_id: string
   cliente_id: string
@@ -57,7 +81,7 @@ export interface DiagnosticoPendiente {
   precio_fuera_de_rango: boolean
   respuestas_tally: unknown
   pdf_url: string | null
-  contenido_json: unknown
+  contenido_json: ContenidoDiagnostico | null
   diag_estado: string
   cliente_estado: string
   created_at: string

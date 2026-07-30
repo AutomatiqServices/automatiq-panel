@@ -8,6 +8,7 @@ import type { DiagnosticoPendiente } from '@/lib/types'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { DesgloseCostos } from './DesgloseCostos'
 
 const WF_E1_URL = `${N8N_BASE}/webhook/automatiq-diagnostico-borrador`
 const WF_E2_URL = `${N8N_BASE}/webhook/automatiq-diagnostico-aprobar`
@@ -26,6 +27,11 @@ export function DiagnosticosTab() {
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [openPdf, setOpenPdf] = useState<Record<string, string>>({})
+  const [openDesglose, setOpenDesglose] = useState<Record<string, boolean>>({})
+
+  function toggleDesglose(id: string) {
+    setOpenDesglose((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
 
   async function load() {
     setLoading(true)
@@ -121,8 +127,8 @@ export function DiagnosticosTab() {
         Genera el borrador, revísalo, y apruébalo para enviarlo al cliente y publicarlo en la carpeta
         del comercial.
       </p>
-      <Card className="p-5">
-        <div className="mb-4 flex items-center justify-between">
+      <Card className="p-4 sm:p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <div className="text-sm font-semibold">Cola de revisión</div>
           <div className="text-xs text-muted-foreground">
             {loading ? '—' : `${diagnosticos.length} pendiente${diagnosticos.length === 1 ? '' : 's'}`}
@@ -139,10 +145,11 @@ export function DiagnosticosTab() {
             {diagnosticos.map((d) => {
               const badge = estadoBadge(d)
               const alerta = d.precio_fuera_de_rango
+              const desglose = d.contenido_json?.desglose
               return (
                 <div key={d.diagnostico_id} className="rounded-lg border p-4">
                   <div className="mb-2 flex flex-wrap items-start justify-between gap-3">
-                    <div>
+                    <div className="min-w-0">
                       <div className="text-sm font-bold">{d.nombre_empresa}</div>
                       <div className="mt-0.5 text-xs text-muted-foreground">
                         {fmtDate(d.created_at)} · Diagnóstico{' '}
@@ -170,12 +177,24 @@ export function DiagnosticosTab() {
                     </Button>
                     <Button
                       size="sm"
+                      variant="outline"
+                      disabled={!desglose}
+                      title={desglose ? undefined : 'Genera el borrador para calcular los costos'}
+                      onClick={() => toggleDesglose(d.diagnostico_id)}
+                    >
+                      {openDesglose[d.diagnostico_id] ? 'Ocultar costos' : 'Ver costos'}
+                    </Button>
+                    <Button
+                      size="sm"
                       disabled={!d.pdf_url || busyId === d.diagnostico_id}
                       onClick={() => aprobarYEnviar(d.diagnostico_id)}
                     >
                       Aprobar y enviar
                     </Button>
                   </div>
+                  {openDesglose[d.diagnostico_id] && desglose && (
+                    <DesgloseCostos desglose={desglose} />
+                  )}
                   {openPdf[d.diagnostico_id] && (
                     <iframe
                       title={`PDF ${d.nombre_empresa}`}
