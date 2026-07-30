@@ -103,7 +103,7 @@ export function FacturacionTab() {
       </div>
 
       {/* Evolución mensual: una sola serie -> un solo tono, sin leyenda. */}
-      <Card className="mb-5 p-5">
+      <Card className="mb-5 p-4 sm:p-5">
         <div className="text-sm font-bold">Facturación cobrada · últimos 12 meses</div>
         <div className="mb-5 text-xs text-muted-foreground">
           Agrupada por el mes del cobro. Pasa el cursor por una barra para ver el importe.
@@ -113,7 +113,10 @@ export function FacturacionTab() {
         ) : maxMes === 0 ? (
           <EmptyList>Todavía no hay cobros registrados.</EmptyList>
         ) : (
-          <div className="flex h-40 items-end gap-1.5">
+          // Móvil: 12 barras no caben legibles, así que el gráfico se desplaza
+          // en horizontal con un ancho mínimo por barra.
+          <div className="no-scrollbar -mx-1 overflow-x-auto px-1">
+            <div className="flex h-40 min-w-[520px] items-end gap-1.5 sm:min-w-0">
             {meses.map((m) => {
               const val = Number(m.cobrado) || 0
               const pct = maxMes > 0 ? (val / maxMes) * 100 : 0
@@ -138,12 +141,13 @@ export function FacturacionTab() {
                 </div>
               )
             })}
+            </div>
           </div>
         )}
       </Card>
 
       {/* Desglose por tipo: 4 valores -> filas etiquetadas, no un gráfico. */}
-      <Card className="mb-5 p-5">
+      <Card className="mb-5 p-4 sm:p-5">
         <div className="mb-4 text-sm font-bold">Desglose de lo cobrado por tipo</div>
         {!resumen ? (
           <EmptyList>Cargando…</EmptyList>
@@ -175,8 +179,8 @@ export function FacturacionTab() {
       </Card>
 
       {/* Pendiente de cobro: muchas filas -> tabla. */}
-      <Card className="p-5">
-        <div className="mb-4 flex items-center justify-between">
+      <Card className="p-4 sm:p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <div className="text-sm font-bold">Pendiente de cobro</div>
           <div className="text-xs text-muted-foreground">
             {pendientes ? `${pendientes.length} pago${pendientes.length === 1 ? '' : 's'}` : '—'}
@@ -191,7 +195,7 @@ export function FacturacionTab() {
             {pendientes.map((p) => (
               <div
                 key={p.pago_id}
-                className="grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-lg border p-3"
+                className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 rounded-lg border p-3 sm:grid-cols-[1fr_auto_auto]"
               >
                 <div className="min-w-0">
                   <div className="truncate text-sm font-semibold">{p.nombre_empresa}</div>
@@ -200,8 +204,12 @@ export function FacturacionTab() {
                     {p.comercial_name ? ` · ${p.comercial_name}` : ''}
                   </div>
                 </div>
-                <div className="text-xs text-muted-foreground">{fmtDate(p.created_at)}</div>
-                <div className="text-sm font-bold text-amber-500">{fm(Number(p.monto))}</div>
+                <div className="order-last text-xs whitespace-nowrap text-muted-foreground sm:order-none">
+                  {fmtDate(p.created_at)}
+                </div>
+                <div className="text-right text-sm font-bold whitespace-nowrap text-amber-500">
+                  {fm(Number(p.monto))}
+                </div>
               </div>
             ))}
           </div>

@@ -47,8 +47,8 @@ export function ClientesTab({ comercialId }: { comercialId: string }) {
 
   return (
     <div>
-      <Card className="mb-5 p-5">
-        <div className="mb-4 flex items-center justify-between">
+      <Card className="mb-5 p-4 sm:p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <div className="text-sm font-semibold">Carpetas de cliente</div>
           <div className="text-xs text-muted-foreground">
             {carpetas ? `${carpetas.length} cliente${carpetas.length === 1 ? '' : 's'}` : '—'}
@@ -66,29 +66,40 @@ export function ClientesTab({ comercialId }: { comercialId: string }) {
                 <button
                   key={c.cliente_id}
                   onClick={() => verLinks(c)}
-                  className="grid grid-cols-[36px_1fr_auto_auto] items-center gap-3 rounded-lg border p-3 text-left hover:bg-muted/40"
+                  // Móvil: importes en segunda línea. sm+: fila de 4 columnas.
+                  className="grid grid-cols-[36px_1fr] items-center gap-x-3 gap-y-2 rounded-lg border p-3 text-left hover:bg-muted/40 sm:grid-cols-[36px_1fr_auto_auto]"
                 >
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-sm font-bold">
                     {(c.nombre_empresa || '?').charAt(0).toUpperCase()}
                   </div>
-                  <div>
-                    <div className="text-sm font-semibold">{c.nombre_empresa}</div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold">{c.nombre_empresa}</div>
                     <div className={`text-xs ${color}`}>{label}</div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-[10px] text-muted-foreground">Diagnóstico</div>
-                    <div className="text-sm font-bold">
-                      {c.precio_fuera_de_rango && (
-                        <span title="Precio fuera de rango 200-400€" className="text-amber-500">
-                          ⚠︎{' '}
-                        </span>
-                      )}
-                      {c.diagnostico_precio ? fm(c.diagnostico_precio) : '—'}
+                  <div className="col-start-2 flex gap-6 sm:col-start-auto sm:block sm:text-right">
+                    <div>
+                      <div className="text-[10px] text-muted-foreground">Diagnóstico</div>
+                      <div className="text-sm font-bold whitespace-nowrap">
+                        {c.precio_fuera_de_rango && (
+                          <span title="Precio fuera de rango 200-400€" className="text-amber-500">
+                            ⚠︎{' '}
+                          </span>
+                        )}
+                        {c.diagnostico_precio ? fm(c.diagnostico_precio) : '—'}
+                      </div>
+                    </div>
+                    <div className="sm:hidden">
+                      <div className="text-[10px] text-muted-foreground">Tu comisión</div>
+                      <div className="text-sm font-bold whitespace-nowrap text-emerald-500">
+                        {fm(c.comision_total || 0)}
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="hidden text-right sm:block">
                     <div className="text-[10px] text-muted-foreground">Tu comisión</div>
-                    <div className="text-sm font-bold text-emerald-500">{fm(c.comision_total || 0)}</div>
+                    <div className="text-sm font-bold whitespace-nowrap text-emerald-500">
+                      {fm(c.comision_total || 0)}
+                    </div>
                   </div>
                 </button>
               )
@@ -98,10 +109,12 @@ export function ClientesTab({ comercialId }: { comercialId: string }) {
       </Card>
 
       {openCliente && (
-        <Card className="p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="text-sm font-semibold">🔗 Links de pago · {openCliente.nombre_empresa}</div>
-            <Button size="sm" variant="outline" onClick={() => setOpenCliente(null)}>
+        <Card className="p-4 sm:p-5">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0 flex-1 text-sm font-semibold">
+              🔗 Links de pago · {openCliente.nombre_empresa}
+            </div>
+            <Button size="sm" variant="outline" className="shrink-0" onClick={() => setOpenCliente(null)}>
               Cerrar
             </Button>
           </div>
@@ -112,9 +125,12 @@ export function ClientesTab({ comercialId }: { comercialId: string }) {
           ) : (
             <div className="flex flex-col gap-2">
               {links.map((l, i) => (
-                <div key={i} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-lg border p-3">
-                  <div>
-                    <div className="text-sm font-semibold">{l.etiqueta}</div>
+                <div
+                  key={i}
+                  className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2 rounded-lg border p-3 sm:grid-cols-[1fr_auto_auto]"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold">{l.etiqueta}</div>
                     <div className="text-xs">
                       {l.pagado ? (
                         <span className="text-emerald-500">✓ Pagado</span>
@@ -123,8 +139,8 @@ export function ClientesTab({ comercialId }: { comercialId: string }) {
                       )}
                     </div>
                   </div>
-                  <div className="text-right text-sm font-bold">{fm(l.monto || 0)}</div>
-                  <div className="flex items-center gap-2">
+                  <div className="text-right text-sm font-bold whitespace-nowrap">{fm(l.monto || 0)}</div>
+                  <div className="col-span-2 flex items-center gap-2 sm:col-span-1">
                     {!l.pagado && l.url && (
                       <>
                         <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(l.url!)}>

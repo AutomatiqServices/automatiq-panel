@@ -67,7 +67,11 @@ export function RankingTab({ sellerId }: { sellerId: string }) {
         </Button>
       </div>
 
-      <Card className={`mb-5 flex-row flex-wrap items-center gap-5 p-6 ${myRank <= 3 && me ? 'bg-primary/5' : ''}`}>
+      <Card
+        className={`mb-5 flex-row flex-wrap items-center gap-4 p-5 sm:gap-5 sm:p-6 ${
+          myRank <= 3 && me ? 'bg-primary/5' : ''
+        }`}
+      >
         <div
           className={`flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-xl border ${
             myRank <= 3 && me ? 'bg-primary text-primary-foreground' : ''
@@ -76,7 +80,7 @@ export function RankingTab({ sellerId }: { sellerId: string }) {
           <div className="text-2xl font-black">{me ? `${myRank}º` : '—'}</div>
           <div className="text-[8px] tracking-wide uppercase">Puesto</div>
         </div>
-        <div className="min-w-[200px] flex-1">
+        <div className="min-w-0 flex-1 basis-[200px]">
           {failed ? (
             <>
               <div className="text-sm font-bold">No se pudo cargar el ranking.</div>
@@ -119,8 +123,8 @@ export function RankingTab({ sellerId }: { sellerId: string }) {
         </div>
       </Card>
 
-      <Card className="p-5">
-        <div className="mb-4 flex items-center justify-between">
+      <Card className="p-4 sm:p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <div className="text-sm font-semibold">Top 5 comerciales</div>
           <div className="text-xs text-muted-foreground">
             {ranked ? `${withSales.length} con ventas ${scopeLbl}` : '—'}
@@ -150,9 +154,13 @@ export function RankingTab({ sellerId }: { sellerId: string }) {
 function RankRow({ r, pos, isMe }: { r: RankingRow; pos: number; isMe: boolean }) {
   const medal = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}º`
   return (
-    <div className={`grid grid-cols-[44px_40px_1fr_auto] items-center gap-3 rounded-lg border p-3 ${isMe ? 'border-primary/40 bg-primary/5' : ''}`}>
-      <div className="text-center text-lg font-bold text-muted-foreground">{medal}</div>
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-sm font-bold">
+    <div
+      className={`grid grid-cols-[32px_36px_1fr_auto] items-center gap-2 rounded-lg border p-3 sm:grid-cols-[44px_40px_1fr_auto] sm:gap-3 ${
+        isMe ? 'border-primary/40 bg-primary/5' : ''
+      }`}
+    >
+      <div className="text-center text-base font-bold text-muted-foreground sm:text-lg">{medal}</div>
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-sm font-bold sm:h-10 sm:w-10">
         {r.name.charAt(0).toUpperCase()}
       </div>
       <div className="min-w-0">
@@ -160,10 +168,12 @@ function RankRow({ r, pos, isMe }: { r: RankingRow; pos: number; isMe: boolean }
           {r.name}
           {isMe && <span className="ml-1.5 text-[9px] tracking-wide">TÚ</span>}
         </div>
-        <div className="text-xs text-muted-foreground">{r.commission > 0 ? `${fm(r.commission)} generados` : '—'}</div>
+        <div className="truncate text-xs text-muted-foreground">
+          {r.commission > 0 ? `${fm(r.commission)} generados` : '—'}
+        </div>
       </div>
       <div className="text-right">
-        <div className="text-xl font-black">{r.sales_count}</div>
+        <div className="text-lg font-black sm:text-xl">{r.sales_count}</div>
         <div className="text-[9px] tracking-wide text-muted-foreground uppercase">ventas</div>
       </div>
     </div>

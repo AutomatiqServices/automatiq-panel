@@ -42,7 +42,7 @@ export function LogrosTab({ sales }: { sales: Sale[] }) {
       <p className="mb-5 text-xs text-muted-foreground">
         {earned.length} de {BADGES.length} logros desbloqueados
       </p>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
         {earned.map((b) => (
           <div key={b.name} className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-center">
             <div className="mb-2 text-3xl grayscale">{b.icon}</div>

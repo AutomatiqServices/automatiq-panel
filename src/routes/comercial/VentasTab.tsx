@@ -10,7 +10,7 @@ const CUR_Y = CUR.getFullYear()
 export function VentasTab({ sales }: { sales: Sale[] }) {
   return (
     <div>
-      <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+      <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
         {MONTHS.map((m, i) => {
           const monthSales = getMonthSales(sales, i, CUR_Y)
           const pct = Math.min(100, (monthSales.length / GOAL) * 100)
@@ -40,7 +40,7 @@ export function VentasTab({ sales }: { sales: Sale[] }) {
           )
         })}
       </div>
-      <Card className="p-5">
+      <Card className="p-4 sm:p-5">
         <div className="mb-4 text-sm font-bold">Historial completo</div>
         <div className="flex max-h-[500px] flex-col gap-2 overflow-y-auto">
           {sales.length === 0 ? (

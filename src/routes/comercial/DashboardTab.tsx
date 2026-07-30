@@ -40,7 +40,7 @@ export function DashboardTab({ sales, refUrl }: { sales: Sale[]; refUrl: string 
   return (
     <div>
       <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border bg-muted/40 p-4">
-        <div className="min-w-[200px] flex-1 text-xs text-muted-foreground">
+        <div className="min-w-0 flex-1 basis-[200px] text-xs text-muted-foreground">
           <strong className="mb-0.5 block text-[10px] tracking-wider text-foreground uppercase">
             Tu link de referido
           </strong>
@@ -77,16 +77,16 @@ export function DashboardTab({ sales, refUrl }: { sales: Sale[]; refUrl: string 
         </Card>
       </div>
 
-      <Card className="mb-5 p-6">
-        <div className="mb-4 flex items-start justify-between">
-          <div>
+      <Card className="mb-5 p-5 sm:p-6">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="min-w-0">
             <div className="text-sm font-bold">Objetivo del mes</div>
             <div className="mt-1 text-xs text-muted-foreground">
               Meta: 8 clientes ·{' '}
               {remaining > 0 ? `${remaining} restante${remaining === 1 ? '' : 's'}` : '¡Objetivo cumplido! 🎯'}
             </div>
           </div>
-          <div className="text-2xl font-black">
+          <div className="shrink-0 text-2xl font-black">
             {totalM}
             <span className="text-base font-normal text-muted-foreground">/{GOAL}</span>
           </div>
@@ -112,8 +112,8 @@ export function DashboardTab({ sales, refUrl }: { sales: Sale[]; refUrl: string 
         </div>
       </Card>
 
-      <Card className="p-5">
-        <div className="mb-4 flex items-center justify-between">
+      <Card className="p-4 sm:p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <div className="text-sm font-semibold">Clientes cerrados este mes</div>
           <div className="text-xs text-muted-foreground">
             {totalM} cliente{totalM === 1 ? '' : 's'} este mes

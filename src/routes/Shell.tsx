@@ -21,10 +21,11 @@ export function Shell() {
 
   return (
     <div className="relative z-10 min-h-screen">
-      <nav className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b bg-background/80 px-6 backdrop-blur">
-        <div className="flex min-w-0 items-center gap-4">
-          <img src="/logo.png" alt="AutomatiQ" className="h-6 w-auto" />
-          <span className="truncate text-xs text-muted-foreground">
+      <nav className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between gap-2 border-b bg-background/80 px-4 backdrop-blur sm:px-6">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+          <img src="/logo.png" alt="AutomatiQ" className="h-6 w-auto shrink-0" />
+          {/* El saludo se oculta en móvil: no cabe junto a los botones. */}
+          <span className="hidden truncate text-xs text-muted-foreground sm:inline">
             Hola, <strong className="text-foreground">{name}</strong>
           </span>
         </div>
@@ -64,7 +65,7 @@ export function Shell() {
           </Button>
         </div>
       </nav>
-      <main className="mx-auto max-w-[1100px] px-6 pt-19 pb-15">
+      <main className="mx-auto max-w-[1100px] px-4 pt-19 pb-15 sm:px-6">
         {view === 'comercial' && seller ? (
           <ComercialDashboard
             seller={seller}

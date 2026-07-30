@@ -33,7 +33,7 @@ export function ComercialDashboard({
   return (
     <div>
       <Tabs defaultValue="dashboard">
-        <TabsList className="mb-7 h-11 flex-wrap">
+        <TabsList className="mb-7 h-11">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="ventas">Mis ventas</TabsTrigger>
           <TabsTrigger value="comisiones">Comisiones</TabsTrigger>

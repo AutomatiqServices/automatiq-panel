@@ -6,7 +6,7 @@ import { FacturacionTab } from '@/routes/interno/FacturacionTab'
 export function InternoDashboard() {
   return (
     <Tabs defaultValue="facturacion">
-      <TabsList className="mb-7 h-11 flex-wrap">
+      <TabsList className="mb-7 h-11">
         <TabsTrigger value="facturacion">Facturación</TabsTrigger>
         <TabsTrigger value="comerciales">Comerciales</TabsTrigger>
         <TabsTrigger value="diagnosticos">Diagnósticos</TabsTrigger>

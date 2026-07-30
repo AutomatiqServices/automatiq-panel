@@ -116,6 +116,14 @@
     }
 }
 
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @layer components {
   .glass-card {
     backdrop-filter: blur(22px) saturate(180%);

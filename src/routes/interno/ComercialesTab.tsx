@@ -94,8 +94,8 @@ export function ComercialesTab() {
         </Card>
       </div>
 
-      <Card className="mb-5 p-5">
-        <div className="mb-4 flex items-center justify-between">
+      <Card className="mb-5 p-4 sm:p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <div className="text-sm font-bold">Equipo comercial</div>
           <div className="text-xs text-muted-foreground">
             Pulsa un comercial para ver sus clientes
@@ -115,7 +115,9 @@ export function ComercialesTab() {
               <button
                 onClick={() => toggleComercial(r)}
                 aria-expanded={abierto}
-                className={`grid w-full grid-cols-[36px_1fr_auto_auto_auto_16px] items-center gap-3 border p-3 text-left transition-colors hover:bg-accent ${
+                // Móvil: avatar + nombre + chevron arriba, métricas en una
+                // segunda fila. lg+: las seis columnas en una sola línea.
+                className={`grid w-full grid-cols-[36px_1fr_16px] items-center gap-x-3 gap-y-2 border p-3 text-left transition-colors hover:bg-accent lg:grid-cols-[36px_1fr_auto_auto_auto_16px] ${
                   abierto ? 'rounded-t-lg border-b-0 bg-accent' : 'rounded-lg'
                 }`}
               >
@@ -142,32 +144,34 @@ export function ComercialesTab() {
                       : 'Sin cierres todavía'}
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs text-muted-foreground">Clientes</div>
-                  <div className="text-sm font-bold">
-                    {r.clientes_total}
-                    <span className="ml-1 text-xs font-normal text-muted-foreground">
-                      ({r.clientes_mes} mes)
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs text-muted-foreground">Cobrada</div>
-                  <div className="text-sm font-bold text-emerald-500">
-                    {fm(Number(r.comision_cobrada))}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs text-muted-foreground">A pagar</div>
-                  <div className="text-sm font-bold text-amber-500">
-                    {fm(Number(r.comision_pendiente))}
-                  </div>
-                </div>
                 <ChevronDownIcon
-                  className={`size-4 text-muted-foreground transition-transform ${
+                  className={`size-4 text-muted-foreground transition-transform lg:order-last ${
                     abierto ? 'rotate-180' : ''
                   }`}
                 />
+                <div className="col-span-2 col-start-2 flex flex-wrap gap-x-6 gap-y-2 lg:contents">
+                  <div className="lg:text-right">
+                    <div className="text-xs text-muted-foreground">Clientes</div>
+                    <div className="text-sm font-bold whitespace-nowrap">
+                      {r.clientes_total}
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">
+                        ({r.clientes_mes} mes)
+                      </span>
+                    </div>
+                  </div>
+                  <div className="lg:text-right">
+                    <div className="text-xs text-muted-foreground">Cobrada</div>
+                    <div className="text-sm font-bold whitespace-nowrap text-emerald-500">
+                      {fm(Number(r.comision_cobrada))}
+                    </div>
+                  </div>
+                  <div className="lg:text-right">
+                    <div className="text-xs text-muted-foreground">A pagar</div>
+                    <div className="text-sm font-bold whitespace-nowrap text-amber-500">
+                      {fm(Number(r.comision_pendiente))}
+                    </div>
+                  </div>
+                </div>
               </button>
 
               {/* Acordeón: grid-rows 0fr -> 1fr anima hasta la altura real
@@ -190,7 +194,7 @@ export function ComercialesTab() {
                         {clientes.map((c) => (
                           <div
                             key={c.cliente_id}
-                            className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 rounded-lg border bg-background/40 p-3"
+                            className="flex flex-col gap-2 rounded-lg border bg-background/40 p-3 lg:grid lg:grid-cols-[1fr_auto_auto_auto] lg:items-center lg:gap-3"
                           >
                             <div className="min-w-0">
                               <div className="truncate text-sm font-semibold">{c.nombre_empresa}</div>
@@ -198,21 +202,25 @@ export function ComercialesTab() {
                                 {ESTADO_LABEL[c.estado] ?? c.estado} · {fmtDate(c.created_at)}
                               </div>
                             </div>
-                            <div className="text-right">
-                              <div className="text-xs text-muted-foreground">Diagnóstico</div>
-                              <div className="text-sm font-bold">
-                                {c.diagnostico_precio ? fm(Number(c.diagnostico_precio)) : '—'}
+                            <div className="flex flex-wrap gap-x-6 gap-y-2 lg:contents">
+                              <div className="lg:text-right">
+                                <div className="text-xs text-muted-foreground">Diagnóstico</div>
+                                <div className="text-sm font-bold whitespace-nowrap">
+                                  {c.diagnostico_precio ? fm(Number(c.diagnostico_precio)) : '—'}
+                                </div>
                               </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-xs text-muted-foreground">Cobrado</div>
-                              <div className="text-sm font-bold text-emerald-500">
-                                {fm(Number(c.cobrado))}
+                              <div className="lg:text-right">
+                                <div className="text-xs text-muted-foreground">Cobrado</div>
+                                <div className="text-sm font-bold whitespace-nowrap text-emerald-500">
+                                  {fm(Number(c.cobrado))}
+                                </div>
                               </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-xs text-muted-foreground">Comisión</div>
-                              <div className="text-sm font-bold">{fm(Number(c.comision_total))}</div>
+                              <div className="lg:text-right">
+                                <div className="text-xs text-muted-foreground">Comisión</div>
+                                <div className="text-sm font-bold whitespace-nowrap">
+                                  {fm(Number(c.comision_total))}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         ))}
