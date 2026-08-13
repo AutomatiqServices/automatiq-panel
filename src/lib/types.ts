@@ -168,3 +168,40 @@ export interface Prospecto {
   asignado_at: string | null
   contactado_at: string | null
 }
+
+export interface ProspectoAdmin {
+  id: string
+  nombre_empresa: string
+  sector: string | null
+  ciudad: string | null
+  pais: string
+  telefono: string | null
+  email: string | null
+  web: string | null
+  score: number
+  importante: boolean
+  estado: string
+  comercial_id: string | null
+  comercial_nombre: string | null
+  asignado_at: string | null
+  contactado_at: string | null
+  created_at: string
+}
+
+export interface ProspectosResumen {
+  total: number
+  sin_asignar: number
+  asignados: number
+  contactados: number
+  descartados: number
+  importantes: number
+}
+
+export interface ProspectosPorComercial {
+  comercial_id: string
+  comercial_nombre: string
+  total: number
+  sin_contactar: number
+  contactados: number
+  importantes: number
+}
