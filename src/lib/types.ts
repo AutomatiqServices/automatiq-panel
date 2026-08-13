@@ -151,3 +151,20 @@ export interface ClienteComercial {
   comision_total: number
   cobrado: number
 }
+
+export interface Prospecto {
+  id: string
+  nombre_empresa: string
+  sector: string | null
+  ciudad: string | null
+  pais: string
+  telefono: string | null
+  email: string | null
+  web: string | null
+  score: number
+  importante: boolean
+  score_motivo: string | null
+  estado: string
+  asignado_at: string | null
+  contactado_at: string | null
+}

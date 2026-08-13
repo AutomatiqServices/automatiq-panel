@@ -4,6 +4,7 @@ import { useAuth } from '@/stores/auth'
 import type { Seller } from '@/lib/types'
 import { loadSales, type Sale } from '@/routes/comercial/data'
 import { DashboardTab } from '@/routes/comercial/DashboardTab'
+import { LeadsTab } from '@/routes/comercial/LeadsTab'
 import { VentasTab } from '@/routes/comercial/VentasTab'
 import { ComisionesTab } from '@/routes/comercial/ComisionesTab'
 import { ClientesTab } from '@/routes/comercial/ClientesTab'
@@ -35,6 +36,7 @@ export function ComercialDashboard({
       <Tabs defaultValue="dashboard">
         <TabsList className="mb-7 h-11">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="leads">Leads</TabsTrigger>
           <TabsTrigger value="ventas">Mis ventas</TabsTrigger>
           <TabsTrigger value="comisiones">Comisiones</TabsTrigger>
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
@@ -43,6 +45,9 @@ export function ComercialDashboard({
         </TabsList>
         <TabsContent value="dashboard">
           <DashboardTab sales={sales} refUrl={refUrl} />
+        </TabsContent>
+        <TabsContent value="leads">
+          <LeadsTab comercialId={seller.id} />
         </TabsContent>
         <TabsContent value="ventas">
           <VentasTab sales={sales} />
