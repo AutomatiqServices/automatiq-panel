@@ -180,6 +180,7 @@ export interface ProspectoAdmin {
   web: string | null
   score: number
   importante: boolean
+  score_motivo: string | null
   estado: string
   comercial_id: string | null
   comercial_nombre: string | null

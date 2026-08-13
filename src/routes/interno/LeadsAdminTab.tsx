@@ -172,6 +172,13 @@ export function LeadsAdminTab() {
                       <div className="text-xs text-muted-foreground">
                         {[l.sector, l.telefono].filter(Boolean).join(' · ')}
                       </div>
+                      {l.score_motivo && (
+                        // Por qué se captó: sin esto la tabla es una lista de
+                        // nombres y no se puede juzgar si el reparto acierta.
+                        <div className="mt-0.5 max-w-[420px] text-[11px] leading-snug text-muted-foreground">
+                          {l.score_motivo.split('| Ojo:')[0].trim()}
+                        </div>
+                      )}
                     </td>
                     <td className="py-2 pr-3 whitespace-nowrap text-muted-foreground">
                       {[l.ciudad, l.pais].filter(Boolean).join(', ')}

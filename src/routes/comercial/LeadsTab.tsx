@@ -115,6 +115,27 @@ export function LeadsTab({ comercialId }: { comercialId: string }) {
   )
 }
 
+// El motivo llega como "razon; razon | Ojo: reserva; reserva". Se parte en dos
+// para que el comercial vea de un golpe por qué le encaja el lead y con qué se
+// va a encontrar, en vez de un párrafo corrido que nadie lee antes de llamar.
+function PorQue({ motivo }: { motivo: string }) {
+  const [encaja, ojo] = motivo.split('| Ojo:')
+
+  return (
+    <div className="mt-2 rounded-md bg-muted/50 p-2">
+      <div className="text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+        Por qué este lead
+      </div>
+      <div className="mt-0.5 text-xs">{encaja.trim()}</div>
+      {ojo && (
+        <div className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+          <span className="font-semibold">Ojo:</span> {ojo.trim()}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function LeadRow({
   lead,
   ocupado,
@@ -192,9 +213,7 @@ function LeadRow({
         )}
       </div>
 
-      {lead.score_motivo && (
-        <div className="mt-1.5 text-[11px] text-muted-foreground">{lead.score_motivo}</div>
-      )}
+      {lead.score_motivo && <PorQue motivo={lead.score_motivo} />}
 
       <div className="mt-3 flex gap-2">
         {!contactado && (
