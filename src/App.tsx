@@ -16,12 +16,14 @@ function readAuthCallback(): { isReset: boolean; linkError: string | null } {
 
   const errorCode = param('error_code') ?? param('error')
   if (errorCode) {
-    const expired = param('error_code') === 'otp_expired'
+    // Un enlace ya usado devuelve el mismo otp_expired que uno caducado, así
+    // que el aviso cubre los dos casos en vez de afirmar solo el segundo.
     return {
       isReset: false,
-      linkError: expired
-        ? 'Este enlace ya caducó. Los enlaces de invitación solo son válidos durante un tiempo limitado. Pide uno nuevo para poder entrar.'
-        : 'El enlace no es válido o ya se usó. Pide uno nuevo para poder entrar.',
+      linkError:
+        param('error_code') === 'otp_expired'
+          ? 'Este enlace ya no es válido: o ha caducado, o ya se había abierto antes. Pide uno nuevo para entrar.'
+          : 'El enlace no es válido. Pide uno nuevo para entrar.',
     }
   }
 

@@ -80,7 +80,10 @@ export function Login({
           Panel AutomatiQ
         </div>
 
-        {linkError && !dismissedLinkError && (
+        {/* El aviso solo tiene sentido en la pantalla de login: en cuanto el
+            usuario pasa a pedir otro enlace ya no aporta nada y confunde,
+            porque parece que el enlace nuevo también ha fallado. */}
+        {linkError && !dismissedLinkError && mode === 'login' && (
           <div className="mb-6 rounded-lg border border-destructive/40 bg-destructive/10 p-4">
             <p className="text-xs leading-relaxed text-foreground">{linkError}</p>
             <button
