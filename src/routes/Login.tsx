@@ -6,8 +6,15 @@ import { Input } from '@/components/ui/input'
 
 type Mode = 'login' | 'recover' | 'reset'
 
-export function Login({ initialMode = 'login' }: { initialMode?: Mode }) {
+export function Login({
+  initialMode = 'login',
+  linkError = null,
+}: {
+  initialMode?: Mode
+  linkError?: string | null
+}) {
   const [mode, setMode] = useState<Mode>(initialMode)
+  const [dismissedLinkError, setDismissedLinkError] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [recoverEmail, setRecoverEmail] = useState('')
@@ -72,6 +79,23 @@ export function Login({ initialMode = 'login' }: { initialMode?: Mode }) {
         <div className="mb-8 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
           Panel AutomatiQ
         </div>
+
+        {linkError && !dismissedLinkError && (
+          <div className="mb-6 rounded-lg border border-destructive/40 bg-destructive/10 p-4">
+            <p className="text-xs leading-relaxed text-foreground">{linkError}</p>
+            <button
+              type="button"
+              className="mt-3 text-xs font-medium underline underline-offset-2 hover:no-underline"
+              onClick={() => {
+                setDismissedLinkError(true)
+                setMode('recover')
+                setError('')
+              }}
+            >
+              Pedir un enlace nuevo
+            </button>
+          </div>
+        )}
 
         {mode === 'login' && (
           <div className="flex flex-col gap-3">
