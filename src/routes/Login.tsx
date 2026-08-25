@@ -162,22 +162,30 @@ export function Login({
 
         {mode === 'reset' && (
           <div className="flex flex-col gap-3">
-            <p className="text-xs text-muted-foreground">Introduce tu nueva contraseña.</p>
-            <Input
-              type="password"
-              placeholder="Mínimo 8 caracteres"
-              value={resetPass}
-              onChange={(e) => setResetPass(e.target.value)}
-              autoComplete="new-password"
-            />
-            <Input
-              type="password"
-              placeholder="Repite la contraseña"
-              value={resetPass2}
-              onChange={(e) => setResetPass2(e.target.value)}
-              autoComplete="new-password"
-              onKeyDown={(e) => e.key === 'Enter' && handleReset()}
-            />
+            <p className="text-xs text-muted-foreground">
+              Elige la contraseña con la que entrarás al panel.
+            </p>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium">Nueva contraseña</span>
+              <Input
+                type="password"
+                placeholder="Mínimo 8 caracteres"
+                value={resetPass}
+                onChange={(e) => setResetPass(e.target.value)}
+                autoComplete="new-password"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium">Repite la contraseña</span>
+              <Input
+                type="password"
+                placeholder="Repite la contraseña"
+                value={resetPass2}
+                onChange={(e) => setResetPass2(e.target.value)}
+                autoComplete="new-password"
+                onKeyDown={(e) => e.key === 'Enter' && handleReset()}
+              />
+            </label>
             {error && <p className="text-xs text-destructive">{error}</p>}
             <Button onClick={handleReset} disabled={busy}>
               Guardar nueva contraseña

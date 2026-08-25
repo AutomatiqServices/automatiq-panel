@@ -5,6 +5,13 @@
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AutomatiQ · Panel</title>
+    <!-- Fondo base inline: los tokens del tema oscuro son blancos translúcidos
+         y quedan invisibles sobre blanco. Si el CSS compilado no llega a
+         aplicarse, esto evita que la pantalla se vea en blanco. -->
+    <style>
+      html { background: #05050e; color-scheme: dark; }
+      body { background: #05050e; color: #f0f0f2; margin: 0; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
