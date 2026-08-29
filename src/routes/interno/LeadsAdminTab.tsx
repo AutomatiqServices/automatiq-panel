@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
+import { useConfirm } from '@/components/ui/use-confirm'
 import { EmptyList } from '@/routes/comercial/SaleRow'
 import type { ProspectoAdmin, ProspectosResumen, ProspectosPorComercial, ResumenComercial } from '@/lib/types'
 
@@ -23,6 +24,7 @@ const COLOR_ESTADO: Record<string, string> = {
 }
 
 export function LeadsAdminTab() {
+  const { confirmar, dialogo } = useConfirm()
   const [leads, setLeads] = useState<ProspectoAdmin[] | null>(null)
   const [resumen, setResumen] = useState<ProspectosResumen | null>(null)
   const [porComercial, setPorComercial] = useState<ProspectosPorComercial[]>([])
@@ -73,10 +75,7 @@ export function LeadsAdminTab() {
     cargar()
   }
 
-  async function borrar(id: string, nombre: string) {
-    // Borrado definitivo: se confirma porque no hay vuelta atrás. Para quitarlo
-    // de la vista sin perderlo, el comercial ya tiene "descartar".
-    if (!window.confirm(`¿Borrar "${nombre}" definitivamente?\n\nNo se puede deshacer.`)) return
+  async function borrar(id: string) {
     setOcupado(id)
     const { error } = await supabase.rpc('ceo_borrar_prospecto', { p_prospecto_id: id })
     setOcupado(null)
@@ -86,6 +85,44 @@ export function LeadsAdminTab() {
     }
     toast.success('Lead borrado')
     cargar()
+  }
+
+  // Reasignar cambia de dueño un lead ajeno y borrar no tiene vuelta atrás:
+  // ambas se confirman. Para quitar un lead de la vista sin perderlo, el
+  // comercial ya tiene "descartar".
+  function pedirReasignar(lead: ProspectoAdmin, comercialId: string | null) {
+    const destino = comerciales.find((c) => c.comercial_id === comercialId)?.name
+    confirmar({
+      title: comercialId ? 'Reasignar el lead' : 'Devolver el lead al pool',
+      description: comercialId ? (
+        <>
+          <strong>{lead.nombre_empresa}</strong> pasa a <strong>{destino}</strong>
+          {lead.comercial_nombre ? <> y deja de estar con {lead.comercial_nombre}</> : null}.
+        </>
+      ) : (
+        <>
+          <strong>{lead.nombre_empresa}</strong> se queda sin comercial asignado y vuelve al pool de
+          reparto.
+        </>
+      ),
+      confirmLabel: comercialId ? 'Reasignar' : 'Devolver al pool',
+      onConfirm: () => reasignar(lead.id, comercialId),
+    })
+  }
+
+  function pedirBorrar(lead: ProspectoAdmin) {
+    confirmar({
+      title: 'Borrar el lead definitivamente',
+      description: (
+        <>
+          <strong>{lead.nombre_empresa}</strong> se elimina de la base de datos. No se puede
+          deshacer. Si solo quieres quitarlo de la vista, descártalo en vez de borrarlo.
+        </>
+      ),
+      confirmLabel: 'Borrar',
+      destructive: true,
+      onConfirm: () => borrar(lead.id),
+    })
   }
 
   if (!leads) return <EmptyList>Cargando…</EmptyList>
@@ -191,7 +228,7 @@ export function LeadsAdminTab() {
                       <select
                         value={l.comercial_id ?? ''}
                         disabled={ocupado === l.id}
-                        onChange={(e) => reasignar(l.id, e.target.value || null)}
+                        onChange={(e) => pedirReasignar(l, e.target.value || null)}
                         className="max-w-[150px] rounded-md border bg-background px-2 py-1 text-xs"
                       >
                         <option value="">— sin asignar —</option>
@@ -207,7 +244,7 @@ export function LeadsAdminTab() {
                         size="sm"
                         variant="ghost"
                         disabled={ocupado === l.id}
-                        onClick={() => borrar(l.id, l.nombre_empresa)}
+                        onClick={() => pedirBorrar(l)}
                         className="h-7 text-xs text-destructive"
                       >
                         Borrar
@@ -220,6 +257,7 @@ export function LeadsAdminTab() {
           </div>
         )}
       </Card>
+      {dialogo}
     </div>
   )
 }

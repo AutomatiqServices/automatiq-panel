@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useAuth } from '@/stores/auth'
 import { Button } from '@/components/ui/button'
+import { useConfirm } from '@/components/ui/use-confirm'
 import { ComercialDashboard } from '@/routes/comercial/ComercialDashboard'
 import { InternoDashboard } from '@/routes/interno/InternoDashboard'
 
 type View = 'comercial' | 'interno'
 
 export function Shell() {
+  const { confirmar, dialogo } = useConfirm()
   const seller = useAuth((s) => s.seller)
   const perfil = useAuth((s) => s.perfil)
   const isCeo = useAuth((s) => s.isCeo)
@@ -60,7 +62,21 @@ export function Shell() {
               ⚙ Cuenta
             </Button>
           )}
-          <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={signOut}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 rounded-full text-xs"
+            // "Salir" está pegado a "Cuenta": sin confirmar, un toque en falso
+            // en móvil te echa del panel.
+            onClick={() =>
+              confirmar({
+                title: '¿Cerrar sesión?',
+                description: 'Tendrás que volver a entrar con tu email y contraseña.',
+                confirmLabel: 'Cerrar sesión',
+                onConfirm: signOut,
+              })
+            }
+          >
             Salir
           </Button>
         </div>
@@ -76,6 +92,7 @@ export function Shell() {
           <InternoDashboard />
         )}
       </main>
+      {dialogo}
     </div>
   )
 }

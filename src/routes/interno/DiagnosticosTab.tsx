@@ -8,6 +8,7 @@ import type { DiagnosticoPendiente, PrecioManual } from '@/lib/types'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useConfirm } from '@/components/ui/use-confirm'
 import { DesgloseCostos } from './DesgloseCostos'
 
 const WF_E1_URL = `${N8N_BASE}/webhook/automatiq-diagnostico-borrador`
@@ -24,6 +25,7 @@ function estadoBadge(d: DiagnosticoPendiente): EstadoBadge {
 
 export function DiagnosticosTab() {
   const perfil = useAuth((s) => s.perfil)
+  const { confirmar, dialogo } = useConfirm()
   const [diagnosticos, setDiagnosticos] = useState<DiagnosticoPendiente[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -132,8 +134,6 @@ export function DiagnosticosTab() {
   }
 
   async function aprobarYEnviar(id: string) {
-    if (!confirm('¿Aprobar este diagnóstico y enviarlo por email al cliente? Esta acción no se puede deshacer.'))
-      return
     setBusyId(id)
     try {
       const res = await fetch(WF_E2_URL, {
@@ -150,6 +150,55 @@ export function DiagnosticosTab() {
     } finally {
       setBusyId(null)
     }
+  }
+
+  // Confirmaciones. Solo se pregunta cuando la acción pisa trabajo ya hecho o
+  // sale del panel hacia el cliente; generar el primer borrador no pregunta.
+  function pedirBorrador(d: DiagnosticoPendiente) {
+    if (!d.pdf_url) {
+      generarBorrador(d.diagnostico_id)
+      return
+    }
+    confirmar({
+      title: 'Regenerar el borrador',
+      description: (
+        <>
+          Se descarta el PDF actual de <strong>{d.nombre_empresa}</strong> y la IA vuelve a redactar
+          el informe desde cero. Los precios que hayas ajustado a mano se pierden.
+        </>
+      ),
+      confirmLabel: 'Regenerar',
+      destructive: true,
+      onConfirm: () => generarBorrador(d.diagnostico_id),
+    })
+  }
+
+  function pedirAplicarPrecios(d: DiagnosticoPendiente, precios: PrecioManual[]) {
+    confirmar({
+      title: 'Aplicar precios y regenerar el PDF',
+      description: (
+        <>
+          Se reescriben los importes del informe de <strong>{d.nombre_empresa}</strong> y se
+          sustituye el PDF actual. El resto del contenido no cambia.
+        </>
+      ),
+      confirmLabel: 'Aplicar precios',
+      onConfirm: () => aplicarPrecios(d.diagnostico_id, precios),
+    })
+  }
+
+  function pedirAprobar(d: DiagnosticoPendiente) {
+    confirmar({
+      title: 'Aprobar y enviar al cliente',
+      description: (
+        <>
+          El diagnóstico de <strong>{d.nombre_empresa}</strong> se envía por email al cliente y se
+          publica en la carpeta del comercial. No se puede deshacer.
+        </>
+      ),
+      confirmLabel: 'Aprobar y enviar',
+      onConfirm: () => aprobarYEnviar(d.diagnostico_id),
+    })
   }
 
   return (
@@ -199,7 +248,7 @@ export function DiagnosticosTab() {
                       size="sm"
                       variant="outline"
                       disabled={busyId === d.diagnostico_id}
-                      onClick={() => generarBorrador(d.diagnostico_id)}
+                      onClick={() => pedirBorrador(d)}
                     >
                       {d.pdf_url ? 'Regenerar' : 'Generar borrador'}
                     </Button>
@@ -218,7 +267,7 @@ export function DiagnosticosTab() {
                     <Button
                       size="sm"
                       disabled={!d.pdf_url || busyId === d.diagnostico_id}
-                      onClick={() => aprobarYEnviar(d.diagnostico_id)}
+                      onClick={() => pedirAprobar(d)}
                     >
                       Aprobar y enviar
                     </Button>
@@ -228,7 +277,7 @@ export function DiagnosticosTab() {
                       desglose={desglose}
                       preciosManuales={d.contenido_json?.precios_manuales}
                       guardando={busyId === d.diagnostico_id}
-                      onAplicar={(precios) => aplicarPrecios(d.diagnostico_id, precios)}
+                      onAplicar={(precios) => pedirAplicarPrecios(d, precios)}
                     />
                   )}
                   {openPdf[d.diagnostico_id] && (
@@ -244,6 +293,7 @@ export function DiagnosticosTab() {
           </div>
         )}
       </Card>
+      {dialogo}
     </div>
   )
 }

@@ -4,12 +4,14 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
+import { useConfirm } from '@/components/ui/use-confirm'
 import { EmptyList } from '@/routes/comercial/SaleRow'
 import type { Prospecto } from '@/lib/types'
 
 // Los leads llegan solos: WF-G los capta y el reparto por territorio decide de
 // quién es cada uno. Aquí el comercial solo los trabaja.
 export function LeadsTab({ comercialId }: { comercialId: string }) {
+  const { confirmar, dialogo } = useConfirm()
   const [leads, setLeads] = useState<Prospecto[] | null>(null)
   const [marcando, setMarcando] = useState<string | null>(null)
 
@@ -46,6 +48,27 @@ export function LeadsTab({ comercialId }: { comercialId: string }) {
     // Los descartados desaparecen de la lista; recargamos en vez de tocar el
     // estado local para que el orden lo siga decidiendo la RPC.
     cargar()
+  }
+
+  // Descartar saca el lead de la lista y no se puede revertir desde aquí, así
+  // que se confirma. Marcar contactado es reversible: va directo.
+  function pedirMarcar(lead: Prospecto, estado: 'contactado' | 'descartado') {
+    if (estado === 'contactado') {
+      marcar(lead.id, estado)
+      return
+    }
+    confirmar({
+      title: 'Descartar el lead',
+      description: (
+        <>
+          <strong>{lead.nombre_empresa}</strong> desaparece de tu lista. Solo un administrador puede
+          recuperarlo.
+        </>
+      ),
+      confirmLabel: 'Descartar',
+      destructive: true,
+      onConfirm: () => marcar(lead.id, estado),
+    })
   }
 
   if (!leads) return <EmptyList>Cargando…</EmptyList>
@@ -90,7 +113,7 @@ export function LeadsTab({ comercialId }: { comercialId: string }) {
                 key={l.id}
                 lead={l}
                 ocupado={marcando === l.id}
-                onMarcar={marcar}
+                onMarcar={pedirMarcar}
               />
             ))}
           </div>
@@ -106,11 +129,12 @@ export function LeadsTab({ comercialId }: { comercialId: string }) {
           </div>
           <div className="flex flex-col gap-2">
             {contactados.map((l) => (
-              <LeadRow key={l.id} lead={l} ocupado={marcando === l.id} onMarcar={marcar} />
+              <LeadRow key={l.id} lead={l} ocupado={marcando === l.id} onMarcar={pedirMarcar} />
             ))}
           </div>
         </Card>
       )}
+      {dialogo}
     </div>
   )
 }
@@ -143,7 +167,7 @@ function LeadRow({
 }: {
   lead: Prospecto
   ocupado: boolean
-  onMarcar: (id: string, estado: 'contactado' | 'descartado') => void
+  onMarcar: (lead: Prospecto, estado: 'contactado' | 'descartado') => void
 }) {
   const sitio = [lead.ciudad, lead.pais].filter(Boolean).join(', ')
   const contactado = lead.estado === 'contactado'
@@ -217,7 +241,7 @@ function LeadRow({
 
       <div className="mt-3 flex gap-2">
         {!contactado && (
-          <Button size="sm" variant="outline" disabled={ocupado} onClick={() => onMarcar(lead.id, 'contactado')}>
+          <Button size="sm" variant="outline" disabled={ocupado} onClick={() => onMarcar(lead, 'contactado')}>
             {ocupado ? 'Guardando…' : 'Marcar contactado'}
           </Button>
         )}
@@ -225,7 +249,7 @@ function LeadRow({
           size="sm"
           variant="ghost"
           disabled={ocupado}
-          onClick={() => onMarcar(lead.id, 'descartado')}
+          onClick={() => onMarcar(lead, 'descartado')}
           className="text-muted-foreground"
         >
           Descartar
