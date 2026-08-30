@@ -4,16 +4,18 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
-import { useConfirm } from '@/components/ui/use-confirm'
 import { EmptyList } from '@/routes/comercial/SaleRow'
+import { DescartarDialog } from '@/routes/comercial/DescartarDialog'
+import type { MotivoDescarte } from '@/lib/motivos-descarte'
 import type { Prospecto } from '@/lib/types'
 
 // Los leads llegan solos: WF-G los capta y el reparto por territorio decide de
 // quién es cada uno. Aquí el comercial solo los trabaja.
 export function LeadsTab({ comercialId }: { comercialId: string }) {
-  const { confirmar, dialogo } = useConfirm()
   const [leads, setLeads] = useState<Prospecto[] | null>(null)
   const [marcando, setMarcando] = useState<string | null>(null)
+  // El lead que está en el diálogo de descarte, o null si no hay ninguno.
+  const [descartando, setDescartando] = useState<Prospecto | null>(null)
 
   const cargar = useCallback(() => {
     supabase
@@ -30,11 +32,19 @@ export function LeadsTab({ comercialId }: { comercialId: string }) {
 
   useEffect(cargar, [cargar])
 
-  async function marcar(id: string, estado: 'contactado' | 'descartado') {
+  async function marcar(
+    id: string,
+    estado: 'contactado' | 'descartado',
+    motivo?: MotivoDescarte,
+    nota?: string,
+  ) {
     setMarcando(id)
     const { error } = await supabase.rpc('marcar_prospecto', {
       p_prospecto_id: id,
       p_estado: estado,
+      p_motivo: motivo ?? null,
+      // Cadena vacía y "sin nota" son lo mismo aquí; la RPC ya normaliza.
+      p_nota: nota || null,
     })
     setMarcando(null)
 
@@ -50,25 +60,15 @@ export function LeadsTab({ comercialId }: { comercialId: string }) {
     cargar()
   }
 
-  // Descartar saca el lead de la lista y no se puede revertir desde aquí, así
-  // que se confirma. Marcar contactado es reversible: va directo.
+  // Marcar contactado es reversible y va directo. Descartar saca el lead de la
+  // lista y solo un administrador puede recuperarlo, así que pasa por el
+  // diálogo, que además recoge el motivo.
   function pedirMarcar(lead: Prospecto, estado: 'contactado' | 'descartado') {
     if (estado === 'contactado') {
       marcar(lead.id, estado)
       return
     }
-    confirmar({
-      title: 'Descartar el lead',
-      description: (
-        <>
-          <strong>{lead.nombre_empresa}</strong> desaparece de tu lista. Solo un administrador puede
-          recuperarlo.
-        </>
-      ),
-      confirmLabel: 'Descartar',
-      destructive: true,
-      onConfirm: () => marcar(lead.id, estado),
-    })
+    setDescartando(lead)
   }
 
   if (!leads) return <EmptyList>Cargando…</EmptyList>
@@ -134,7 +134,15 @@ export function LeadsTab({ comercialId }: { comercialId: string }) {
           </div>
         </Card>
       )}
-      {dialogo}
+      <DescartarDialog
+        empresa={descartando?.nombre_empresa ?? null}
+        onOpenChange={(abierto) => {
+          if (!abierto) setDescartando(null)
+        }}
+        onConfirm={(motivo, nota) => {
+          if (descartando) return marcar(descartando.id, 'descartado', motivo, nota)
+        }}
+      />
     </div>
   )
 }

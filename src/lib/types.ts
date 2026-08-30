@@ -186,6 +186,9 @@ export interface ProspectoAdmin {
   comercial_nombre: string | null
   asignado_at: string | null
   contactado_at: string | null
+  motivo_descarte: string | null
+  nota_descarte: string | null
+  descartado_at: string | null
   created_at: string
 }
 
@@ -204,5 +207,12 @@ export interface ProspectosPorComercial {
   total: number
   sin_contactar: number
   contactados: number
+  importantes: number
+}
+
+/** Recuento de descartes por motivo, para ver qué falla en la captación. */
+export interface MotivoDescarteRecuento {
+  motivo: string
+  total: number
   importantes: number
 }

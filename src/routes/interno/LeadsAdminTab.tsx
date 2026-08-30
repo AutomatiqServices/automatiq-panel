@@ -6,7 +6,14 @@ import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
 import { useConfirm } from '@/components/ui/use-confirm'
 import { EmptyList } from '@/routes/comercial/SaleRow'
-import type { ProspectoAdmin, ProspectosResumen, ProspectosPorComercial, ResumenComercial } from '@/lib/types'
+import { etiquetaMotivo } from '@/lib/motivos-descarte'
+import type {
+  ProspectoAdmin,
+  ProspectosResumen,
+  ProspectosPorComercial,
+  ResumenComercial,
+  MotivoDescarteRecuento,
+} from '@/lib/types'
 
 const ESTADOS = [
   { valor: null, etiqueta: 'Todos' },
@@ -28,6 +35,7 @@ export function LeadsAdminTab() {
   const [leads, setLeads] = useState<ProspectoAdmin[] | null>(null)
   const [resumen, setResumen] = useState<ProspectosResumen | null>(null)
   const [porComercial, setPorComercial] = useState<ProspectosPorComercial[]>([])
+  const [motivos, setMotivos] = useState<MotivoDescarteRecuento[]>([])
   const [comerciales, setComerciales] = useState<ResumenComercial[]>([])
   const [filtro, setFiltro] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState<string | null>(null)
@@ -37,7 +45,8 @@ export function LeadsAdminTab() {
       supabase.rpc('ceo_prospectos', { p_estado: filtro, p_pais: null, p_limite: 500 }),
       supabase.rpc('ceo_prospectos_resumen'),
       supabase.rpc('ceo_prospectos_por_comercial'),
-    ]).then(([r1, r2, r3]) => {
+      supabase.rpc('ceo_motivos_descarte', { p_dias: 90 }),
+    ]).then(([r1, r2, r3, r4]) => {
       if (r1.error) {
         toast.error('No se pudieron cargar los leads')
         setLeads([])
@@ -47,6 +56,7 @@ export function LeadsAdminTab() {
       // Las RPC de agregados devuelven una fila; si no hay datos, viene vacío.
       setResumen(((r2.data as ProspectosResumen[]) ?? [])[0] ?? null)
       setPorComercial((r3.data as ProspectosPorComercial[]) ?? [])
+      setMotivos((r4.data as MotivoDescarteRecuento[]) ?? [])
     })
   }, [filtro])
 
@@ -156,6 +166,8 @@ export function LeadsAdminTab() {
         </Card>
       )}
 
+      {motivos.length > 0 && <MotivosDescarte motivos={motivos} />}
+
       <Card className="p-4 sm:p-5">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -216,6 +228,19 @@ export function LeadsAdminTab() {
                           {l.score_motivo.split('| Ojo:')[0].trim()}
                         </div>
                       )}
+                      {l.estado === 'descartado' && (
+                        // Lo que dijo el comercial al tirarlo. Va pegado al
+                        // lead porque el recuento de arriba dice qué falla en
+                        // general, pero no de qué empresa se trataba.
+                        <div className="mt-1 max-w-[420px] rounded-md bg-muted/60 px-2 py-1 text-[11px] leading-snug">
+                          <span className="font-semibold">
+                            {etiquetaMotivo(l.motivo_descarte)}
+                          </span>
+                          {l.nota_descarte && (
+                            <span className="text-muted-foreground"> · {l.nota_descarte}</span>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="py-2 pr-3 whitespace-nowrap text-muted-foreground">
                       {[l.ciudad, l.pais].filter(Boolean).join(', ')}
@@ -259,6 +284,47 @@ export function LeadsAdminTab() {
       </Card>
       {dialogo}
     </div>
+  )
+}
+
+// Por qué se están tirando los leads. La barra proporcional es lo que hace
+// legible el bloque: con siete categorías, comparar cifras sueltas obliga a
+// leerlas todas para saber cuál domina.
+function MotivosDescarte({ motivos }: { motivos: MotivoDescarteRecuento[] }) {
+  const total = motivos.reduce((suma, m) => suma + m.total, 0)
+  // Las RPC ya vienen ordenadas por volumen, así que el mayor es el primero.
+  const mayor = motivos[0]?.total ?? 1
+
+  return (
+    <Card className="mb-5 p-4 sm:p-5">
+      <div className="text-sm font-semibold">Por qué se descartan</div>
+      <div className="mb-4 text-xs text-muted-foreground">
+        {total} {total === 1 ? 'descarte' : 'descartes'} en los últimos 90 días · lo que más se
+        repite es lo que hay que corregir en la captación
+      </div>
+      <div className="flex flex-col gap-2">
+        {motivos.map((m) => (
+          <div key={m.motivo} className="flex items-center gap-3">
+            <div className="w-48 shrink-0 truncate text-xs sm:w-56">{etiquetaMotivo(m.motivo)}</div>
+            <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary/60"
+                style={{ width: `${Math.round((m.total / mayor) * 100)}%` }}
+              />
+            </div>
+            <div className="w-24 shrink-0 text-right text-xs">
+              <span className="font-bold">{m.total}</span>
+              {m.importantes > 0 && (
+                <span className="text-amber-600 dark:text-amber-400">
+                  {' '}
+                  · {m.importantes}★
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
   )
 }
 
