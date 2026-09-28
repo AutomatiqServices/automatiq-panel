@@ -152,7 +152,37 @@ export interface ClienteComercial {
   cobrado: number
 }
 
-export interface Prospecto {
+/**
+ * Los apartados de calificación que un comercial va llenando mientras trabaja
+  * un lead: quién es el contacto, en qué etapa está, qué se sabe de la empresa.
+   * Viven en un solo tipo porque son exactamente los mismos campos en el panel
+    * del comercial (get_mis_prospectos) y en la vista de interno (ceo_prospectos)
+     * — si divergen, el CEO deja de ver lo mismo que anotó el comercial.
+      */
+export interface ApartadosLead {
+    nombre_contacto: string | null
+    cargo: string | null
+    linkedin: string | null
+    rol_compra: string | null
+    tamano_empresa: string | null
+    tecnologia_stack: string | null
+    senal_compra: string | null
+    pain_point: string | null
+    producto_interes: string | null
+    prioridad: string | null
+    fuente_lead: string | null
+    fecha_alta: string | null
+    ultimo_contacto: string | null
+    proximo_followup: string | null
+    etapa: string | null
+    estado_lead: string | null
+    intentos: number | null
+    respuesta: string | null
+    resultado_motivo: string | null
+    notas: string | null
+}
+
+export interface Prospecto extends ApartadosLead {
   id: string
   nombre_empresa: string
   sector: string | null
@@ -169,7 +199,7 @@ export interface Prospecto {
   contactado_at: string | null
 }
 
-export interface ProspectoAdmin {
+export interface ProspectoAdmin extends ApartadosLead {
   id: string
   nombre_empresa: string
   sector: string | null
