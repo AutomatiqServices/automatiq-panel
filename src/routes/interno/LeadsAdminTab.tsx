@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { useConfirm } from '@/components/ui/use-confirm'
 import { EmptyList } from '@/routes/comercial/SaleRow'
 import { etiquetaMotivo } from '@/lib/motivos-descarte'
+import { ApartadosLead, tieneApartados } from '@/components/ApartadosLead'
 import type {
   ProspectoAdmin,
   ProspectosResumen,
@@ -38,11 +39,20 @@ export function LeadsAdminTab() {
   const [motivos, setMotivos] = useState<MotivoDescarteRecuento[]>([])
   const [comerciales, setComerciales] = useState<ResumenComercial[]>([])
   const [filtro, setFiltro] = useState<string | null>(null)
+  // Comercial seleccionado en "Reparto por comercial": entra a su detalle
+  // completo (todos los apartados) para revisar cómo está calificando.
+  const [comercialFiltro, setComercialFiltro] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState<string | null>(null)
+  const [expandido, setExpandido] = useState<string | null>(null)
 
   const cargar = useCallback(() => {
     Promise.all([
-      supabase.rpc('ceo_prospectos', { p_estado: filtro, p_pais: null, p_limite: 500 }),
+      supabase.rpc('ceo_prospectos', {
+        p_estado: filtro,
+        p_pais: null,
+        p_comercial_id: comercialFiltro,
+        p_limite: 500,
+      }),
       supabase.rpc('ceo_prospectos_resumen'),
       supabase.rpc('ceo_prospectos_por_comercial'),
       supabase.rpc('ceo_motivos_descarte', { p_dias: 90 }),
@@ -58,7 +68,7 @@ export function LeadsAdminTab() {
       setPorComercial((r3.data as ProspectosPorComercial[]) ?? [])
       setMotivos((r4.data as MotivoDescarteRecuento[]) ?? [])
     })
-  }, [filtro])
+  }, [filtro, comercialFiltro])
 
   useEffect(cargar, [cargar])
 
@@ -151,17 +161,39 @@ export function LeadsAdminTab() {
 
       {porComercial.length > 0 && (
         <Card className="mb-5 p-4 sm:p-5">
-          <div className="mb-4 text-sm font-semibold">Reparto por comercial</div>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-            {porComercial.map((c) => (
-              <div key={c.comercial_id} className="rounded-lg border p-3">
-                <div className="truncate text-sm font-semibold">{c.comercial_nombre}</div>
-                <div className="text-2xl font-extrabold">{c.total}</div>
-                <div className="text-xs text-muted-foreground">
-                  {c.sin_contactar} sin contactar · {c.importantes} prioritarios
-                </div>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold">Reparto por comercial</div>
+              <div className="text-xs text-muted-foreground">
+                Entra a uno para revisar cómo está calificando sus leads.
               </div>
-            ))}
+            </div>
+            {comercialFiltro && (
+              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setComercialFiltro(null)}>
+                Ver todos
+              </Button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+            {porComercial.map((c) => {
+              const seleccionado = comercialFiltro === c.comercial_id
+              return (
+                <button
+                  key={c.comercial_id}
+                  type="button"
+                  onClick={() => setComercialFiltro(seleccionado ? null : c.comercial_id)}
+                  className={`rounded-lg border p-3 text-left transition-colors hover:bg-muted/50 ${
+                    seleccionado ? 'border-primary bg-primary/5' : ''
+                  }`}
+                >
+                  <div className="truncate text-sm font-semibold">{c.comercial_nombre}</div>
+                  <div className="text-2xl font-extrabold">{c.total}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {c.sin_contactar} sin contactar · {c.importantes} prioritarios
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </Card>
       )}
@@ -171,7 +203,11 @@ export function LeadsAdminTab() {
       <Card className="p-4 sm:p-5">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="text-sm font-semibold">Todos los leads</div>
+            <div className="text-sm font-semibold">
+              {comercialFiltro
+                ? `Leads de ${comerciales.find((c) => c.comercial_id === comercialFiltro)?.name ?? 'este comercial'}`
+                : 'Todos los leads'}
+            </div>
             <div className="text-xs text-muted-foreground">
               Reasigna o borra desde aquí. Mostrando {leads.length}.
             </div>
@@ -209,8 +245,12 @@ export function LeadsAdminTab() {
                 </tr>
               </thead>
               <tbody>
-                {leads.map((l) => (
-                  <tr key={l.id} className="border-b last:border-0">
+                {leads.map((l) => {
+                  const hayApartados = tieneApartados(l)
+                  const abierto = expandido === l.id
+                  return (
+                  <Fragment key={l.id}>
+                  <tr className="border-b last:border-0">
                     <td className="py-2 pr-3">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{l.nombre_empresa}</span>
@@ -265,18 +305,39 @@ export function LeadsAdminTab() {
                       </select>
                     </td>
                     <td className="py-2 pr-3">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        disabled={ocupado === l.id}
-                        onClick={() => pedirBorrar(l)}
-                        className="h-7 text-xs text-destructive"
-                      >
-                        Borrar
-                      </Button>
+                      <div className="flex gap-1">
+                        {hayApartados && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setExpandido(abierto ? null : l.id)}
+                            className="h-7 text-xs"
+                          >
+                            {abierto ? 'Ocultar' : 'Apartados'}
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={ocupado === l.id}
+                          onClick={() => pedirBorrar(l)}
+                          className="h-7 text-xs text-destructive"
+                        >
+                          Borrar
+                        </Button>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                  {abierto && (
+                    <tr className="border-b last:border-0">
+                      <td colSpan={6} className="pb-3">
+                        <ApartadosLead lead={l} />
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
+                  )
+                })}
               </tbody>
             </table>
           </div>
