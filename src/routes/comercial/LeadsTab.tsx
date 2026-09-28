@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
 import { EmptyList } from '@/routes/comercial/SaleRow'
 import { DescartarDialog } from '@/routes/comercial/DescartarDialog'
-import type { MotivoDescarte } from '@/lib/motivos-descarte'
+import { ApartadosLead, tieneApartados } from '@/components/ApartadosLead'
+  import type { MotivoDescarte } from '@/lib/motivos-descarte'
 import type { Prospecto } from '@/lib/types'
 
 // Los leads llegan solos: WF-G los capta y el reparto por territorio decide de
@@ -177,8 +178,10 @@ function LeadRow({
   ocupado: boolean
   onMarcar: (lead: Prospecto, estado: 'contactado' | 'descartado') => void
 }) {
-  const sitio = [lead.ciudad, lead.pais].filter(Boolean).join(', ')
+  const [detalleAbierto, setDetalleAbierto] = useState(false)
+    const sitio = [lead.ciudad, lead.pais].filter(Boolean).join(', ')
   const contactado = lead.estado === 'contactado'
+  const hayApartados = tieneApartados(lead)
 
   return (
     // El contactado se atenúa y cambia de borde: de un vistazo se ve cuáles ya
@@ -247,12 +250,19 @@ function LeadRow({
 
       {lead.score_motivo && <PorQue motivo={lead.score_motivo} />}
 
-      <div className="mt-3 flex gap-2">
+      {hayApartados && detalleAbierto && <ApartadosLead lead={lead} />}
+      
+      <div className="mt-3 flex flex-wrap gap-2">
         {!contactado && (
           <Button size="sm" variant="outline" disabled={ocupado} onClick={() => onMarcar(lead, 'contactado')}>
             {ocupado ? 'Guardando…' : 'Marcar contactado'}
           </Button>
         )}
+        {hayApartados && (
+        <Button size="sm" variant="ghost" onClick={() => setDetalleAbierto((v) => !v)}>
+          {detalleAbierto ? 'Ocultar detalles' : 'Ver detalles'}
+        </Button>
+      )}
         <Button
           size="sm"
           variant="ghost"
