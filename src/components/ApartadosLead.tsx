@@ -6,12 +6,12 @@ import { fmtDate } from '@/lib/format'
 // mostrarlos vive en un solo sitio: si un campo nuevo se agrega a la RPC,
 // se agrega aquí una vez y aparece en los dos paneles.
 
-function Campo({ etiqueta, valor }: { etiqueta: string; valor: string | number | null }) {
+function Campo({ etiqueta, valor, largo = false }: { etiqueta: string; valor: string | number | null; largo?: boolean }) {
     if (valor === null || valor === '') return null
     return (
-          <div className="min-w-0">
+          <div className={largo ? 'col-span-full min-w-0' : 'min-w-0'}>
                 <div className="text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">{etiqueta}</div>
-                <div className="truncate text-xs">{valor}</div>
+                <div className="text-xs break-words whitespace-pre-wrap">{valor}</div>
           </div>
         )
 }
@@ -52,9 +52,9 @@ export function ApartadosLead({ lead }: { lead: ApartadosLeadData }) {
                     <Campo etiqueta="Cargo" valor={lead.cargo} />
                     <Campo etiqueta="Rol de compra" valor={lead.rol_compra} />
                     <Campo etiqueta="Tamaño de empresa" valor={lead.tamano_empresa} />
-                    <Campo etiqueta="Stack tecnológico" valor={lead.tecnologia_stack} />
-                    <Campo etiqueta="Señal de compra" valor={lead.senal_compra} />
-                    <Campo etiqueta="Pain point" valor={lead.pain_point} />
+                    <Campo etiqueta="Stack tecnológico" valor={lead.tecnologia_stack} largo />
+                    <Campo etiqueta="Señal de compra" valor={lead.senal_compra} largo />
+                    <Campo etiqueta="Pain point" valor={lead.pain_point} largo />
                     <Campo etiqueta="Producto de interés" valor={lead.producto_interes} />
                     <Campo etiqueta="Prioridad" valor={lead.prioridad} />
                     <Campo etiqueta="Fuente del lead" valor={lead.fuente_lead} />
@@ -62,7 +62,7 @@ export function ApartadosLead({ lead }: { lead: ApartadosLeadData }) {
                     <Campo etiqueta="Estado de calificación" valor={lead.estado_lead} />
                     <Campo etiqueta="Intentos de contacto" valor={lead.intentos} />
                     <Campo etiqueta="Última respuesta" valor={lead.respuesta} />
-                    <Campo etiqueta="Resultado / motivo" valor={lead.resultado_motivo} />
+                    <Campo etiqueta="Resultado / motivo" valor={lead.resultado_motivo} largo />
                     <Campo etiqueta="Alta del lead" valor={fecha(lead.fecha_alta)} />
                     <Campo etiqueta="Último contacto" valor={fecha(lead.ultimo_contacto)} />
                     <Campo etiqueta="Próximo seguimiento" valor={fecha(lead.proximo_followup)} />
