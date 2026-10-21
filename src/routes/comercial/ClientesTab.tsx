@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { fm } from '@/lib/format'
 import { EmptyList } from '@/routes/comercial/SaleRow'
 import type { Carpeta, LinkPago } from '@/lib/types'
+import { toast } from 'sonner'
 
 const ESTADOS: Record<string, [string, string]> = {
   nuevo: ['Nuevo', 'text-muted-foreground'],
@@ -21,6 +22,7 @@ export function ClientesTab({ comercialId }: { comercialId: string }) {
   const [carpetas, setCarpetas] = useState<Carpeta[] | null>(null)
   const [openCliente, setOpenCliente] = useState<Carpeta | null>(null)
   const [links, setLinks] = useState<LinkPago[] | null>(null)
+  const [abriendoPdf, setAbriendoPdf] = useState(false)
 
   useEffect(() => {
     supabase
@@ -30,6 +32,21 @@ export function ClientesTab({ comercialId }: { comercialId: string }) {
         setCarpetas((data as Carpeta[]) ?? [])
       })
   }, [comercialId])
+
+  async function abrirDiagnostico(clienteId: string) {
+    setAbriendoPdf(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('get-diagnostico-signed-url', {
+        body: { cliente_id: clienteId },
+      })
+      if (error || !data?.url) throw new Error(error?.message || 'No se pudo abrir el PDF')
+      window.open(data.url, '_blank', 'noopener')
+    } catch (e) {
+      toast.error('No se pudo abrir el diagnóstico: ' + (e as Error).message)
+    } finally {
+      setAbriendoPdf(false)
+    }
+  }
 
   async function verLinks(c: Carpeta) {
     setOpenCliente(c)
@@ -118,6 +135,17 @@ export function ClientesTab({ comercialId }: { comercialId: string }) {
               Cerrar
             </Button>
           </div>
+          {openCliente.diagnostico_pdf_url && (
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+              <div className="min-w-0 text-sm">
+                <div className="font-semibold">Diagnóstico listo</div>
+                <div className="text-xs text-muted-foreground">PDF para presentar al cliente en la reunión</div>
+              </div>
+              <Button size="sm" disabled={abriendoPdf} onClick={() => abrirDiagnostico(openCliente.cliente_id)}>
+                {abriendoPdf ? 'Abriendo…' : 'Ver / descargar PDF'}
+              </Button>
+            </div>
+          )}
           {!links ? (
             <EmptyList>Cargando…</EmptyList>
           ) : links.length === 0 ? (
