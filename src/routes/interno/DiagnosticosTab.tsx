@@ -264,12 +264,14 @@ export function DiagnosticosTab() {
                     >
                       {openDesglose[d.diagnostico_id] ? 'Ocultar costos' : 'Ver costos'}
                     </Button>
+                    {/* Envío al cliente desactivado a propósito: el comercial descarga el PDF y lo presenta en reunión. */}
                     <Button
                       size="sm"
-                      disabled={!d.pdf_url || busyId === d.diagnostico_id}
+                      disabled
+                      title="Envío al cliente desactivado: el comercial presenta el PDF en reunión"
                       onClick={() => pedirAprobar(d)}
                     >
-                      Aprobar y enviar
+                      Envío desactivado
                     </Button>
                   </div>
                   {openDesglose[d.diagnostico_id] && desglose && (
