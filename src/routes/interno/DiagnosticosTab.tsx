@@ -12,7 +12,6 @@ import { useConfirm } from '@/components/ui/use-confirm'
 import { DesgloseCostos } from './DesgloseCostos'
 
 const WF_E1_URL = `${N8N_BASE}/webhook/automatiq-diagnostico-borrador`
-const WF_E2_URL = `${N8N_BASE}/webhook/automatiq-diagnostico-aprobar`
 const WF_E3_URL = `${N8N_BASE}/webhook/automatiq-diagnostico-reprecio`
 
 type EstadoBadge = { label: string; variant: 'secondary' | 'default' | 'outline' }
@@ -133,20 +132,19 @@ export function DiagnosticosTab() {
     }
   }
 
-  async function aprobarYEnviar(id: string) {
+  async function liberarDiagnostico(id: string) {
+    if (!perfil) {
+      toast.error('Sesión no válida')
+      return
+    }
     setBusyId(id)
     try {
-      const res = await fetch(WF_E2_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Internal-Key': INTERNAL_PANEL_KEY },
-        body: JSON.stringify({ diagnostico_id: id, aprobado_por: perfil?.id }),
-      })
-      const body = await res.json().catch(() => ({}))
-      if (!res.ok || body.ok === false) throw new Error(body.error || 'Error al aprobar y enviar')
-      toast.success('Diagnóstico enviado al cliente')
+      const { error } = await supabase.rpc('liberar_diagnostico', { p_diagnostico_id: id })
+      if (error) throw new Error(error.message)
+      toast.success('Diagnóstico liberado: ya lo ve el comercial')
       await load()
     } catch (e) {
-      toast.error('No se pudo aprobar/enviar: ' + (e as Error).message)
+      toast.error('No se pudo liberar: ' + (e as Error).message)
     } finally {
       setBusyId(null)
     }
@@ -189,23 +187,23 @@ export function DiagnosticosTab() {
 
   function pedirAprobar(d: DiagnosticoPendiente) {
     confirmar({
-      title: 'Aprobar y enviar al cliente',
+      title: 'Liberar al comercial',
       description: (
         <>
-          El diagnóstico de <strong>{d.nombre_empresa}</strong> se envía por email al cliente y se
-          publica en la carpeta del comercial. No se puede deshacer.
+          El diagnóstico de <strong>{d.nombre_empresa}</strong> pasa a la carpeta del comercial para
+          que lo descargue y lo presente en reunión. No se envía nada al cliente.
         </>
       ),
-      confirmLabel: 'Aprobar y enviar',
-      onConfirm: () => aprobarYEnviar(d.diagnostico_id),
+      confirmLabel: 'Liberar',
+      onConfirm: () => liberarDiagnostico(d.diagnostico_id),
     })
   }
 
   return (
     <div>
       <p className="mb-5 text-xs text-muted-foreground">
-        Genera el borrador, revísalo, y apruébalo para enviarlo al cliente y publicarlo en la carpeta
-        del comercial.
+        Genera el borrador, revísalo y libéralo: el comercial lo descarga y lo presenta al cliente.
+        El panel no envía nada al cliente.
       </p>
       <Card className="p-4 sm:p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
@@ -264,14 +262,12 @@ export function DiagnosticosTab() {
                     >
                       {openDesglose[d.diagnostico_id] ? 'Ocultar costos' : 'Ver costos'}
                     </Button>
-                    {/* Envío al cliente desactivado a propósito: el comercial descarga el PDF y lo presenta en reunión. */}
                     <Button
                       size="sm"
-                      disabled
-                      title="Envío al cliente desactivado: el comercial presenta el PDF en reunión"
+                      disabled={!d.pdf_url || busyId === d.diagnostico_id}
                       onClick={() => pedirAprobar(d)}
                     >
-                      Envío desactivado
+                      Liberar al comercial
                     </Button>
                   </div>
                   {openDesglose[d.diagnostico_id] && desglose && (
