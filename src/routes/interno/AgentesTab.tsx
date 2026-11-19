@@ -61,7 +61,7 @@ function Titulo({ children, sub }: { children: ReactNode; sub?: string }) {
 }
 
 /** Medidor circular tipo cuota: % del presupuesto gastado, con marca de lo permitido hoy. */
-function Medidor({ pct, marca, color }: { pct: number; marca: number; color: string }) {
+function Medidor({ pct, marca, color, etiqueta = 'del presupuesto' }: { pct: number; marca: number; color: string; etiqueta?: string }) {
   const R = 52
   const ARCO = 0.75 // 270 grados
   const L = 2 * Math.PI * R
@@ -92,7 +92,7 @@ function Medidor({ pct, marca, color }: { pct: number; marca: number; color: str
         </tspan>
       </text>
       <text x="70" y="90" textAnchor="middle" fontSize="9" fill="currentColor" opacity="0.6">
-        del presupuesto
+        {etiqueta}
       </text>
     </svg>
   )
@@ -119,6 +119,86 @@ function Kpi({ label, valor, nota, color }: { label: string; valor: string; nota
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="mt-1 text-2xl font-extrabold tracking-tight">{valor}</div>
       {nota && <div className="mt-0.5 text-[11px] text-muted-foreground">{nota}</div>}
+    </Card>
+  )
+}
+
+/** Uso de la suscripción de Claude (no hay API): lo apuntas tú a mano y se guarda en este navegador. */
+function SuscripcionClaude() {
+  type Reg = { sesion: number; semana: number; fecha: string }
+  const [reg, setReg] = useState<Reg>(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem('aq_suscripcion_claude') || '')
+      return { sesion: Number(v.sesion) || 0, semana: Number(v.semana) || 0, fecha: String(v.fecha || '') }
+    } catch {
+      return { sesion: 0, semana: 0, fecha: '' }
+    }
+  })
+  const [edit, setEdit] = useState(false)
+  const [sesion, setSesion] = useState(String(reg.sesion))
+  const [semana, setSemana] = useState(String(reg.semana))
+  const clamp = (v: string) => Math.min(100, Math.max(0, Math.round(Number(v) || 0)))
+  const color = (p: number) => (p >= 85 ? '#fb7185' : p >= 60 ? '#f59e0b' : '#2dd4bf')
+  function guardar() {
+    const nuevo = { sesion: clamp(sesion), semana: clamp(semana), fecha: new Date().toISOString() }
+    localStorage.setItem('aq_suscripcion_claude', JSON.stringify(nuevo))
+    setReg(nuevo)
+    setEdit(false)
+  }
+  return (
+    <Card className="p-4 sm:p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <Titulo sub="Lo que ves en Claude → Ajustes → Uso. No hay forma automática de leerlo, así que lo apuntas aquí.">
+          Suscripción de Claude
+        </Titulo>
+        <button
+          type="button"
+          onClick={() => setEdit((e) => !e)}
+          className="rounded-md border border-white/15 px-3 py-1 text-xs font-semibold hover:bg-white/10"
+        >
+          {edit ? 'Cancelar' : 'Actualizar %'}
+        </button>
+      </div>
+      <div className="flex flex-wrap items-center justify-around gap-6">
+        <div className="text-center">
+          <Medidor pct={reg.sesion / 100} marca={0} color={color(reg.sesion)} etiqueta="sesión actual" />
+        </div>
+        <div className="text-center">
+          <Medidor pct={reg.semana / 100} marca={0} color={color(reg.semana)} etiqueta="esta semana" />
+        </div>
+      </div>
+      <div className="mt-3 text-center text-[11px] text-muted-foreground">
+        {reg.fecha ? `Apuntado ${hace(reg.fecha)}` : 'Todavía no has apuntado nada'}
+      </div>
+      {edit && (
+        <div className="mt-4 flex flex-wrap items-end justify-center gap-3">
+          <label className="text-xs">
+            Sesión actual (%)
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={sesion}
+              onChange={(e) => setSesion(e.target.value)}
+              className="mt-1 block w-28 rounded-md border border-white/15 bg-transparent px-2 py-1.5 text-sm"
+            />
+          </label>
+          <label className="text-xs">
+            Semana (%)
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={semana}
+              onChange={(e) => setSemana(e.target.value)}
+              className="mt-1 block w-28 rounded-md border border-white/15 bg-transparent px-2 py-1.5 text-sm"
+            />
+          </label>
+          <button type="button" onClick={guardar} className="rounded-md bg-amber-500 px-4 py-1.5 text-sm font-bold text-black">
+            Guardar
+          </button>
+        </div>
+      )}
     </Card>
   )
 }
@@ -474,6 +554,9 @@ export function AgentesTab() {
     <div className="grid gap-8">
       <section>
         <Titulo sub="Gasto de la API de Claude contra el presupuesto que tú fijas">Claude · uso y presupuesto</Titulo>
+        <div className="mb-5">
+          <SuscripcionClaude />
+        </div>
         <UsoClaude />
       </section>
       <section>
